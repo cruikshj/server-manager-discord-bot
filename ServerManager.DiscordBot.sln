@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F777902F-D759-4843-8F54-6786E1FC59CA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerManager.DiscordBot", "src\ServerManager.DiscordBot\ServerManager.DiscordBot.csproj", "{624BF89C-5541-4BD5-AB7E-B50758AE3172}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{624BF89C-5541-4BD5-AB7E-B50758AE3172} = {F777902F-D759-4843-8F54-6786E1FC59CA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FEC634BC-8A0C-46CD-9602-D82CC28A6E3D}
+	EndGlobalSection
+EndGlobal
