@@ -16,10 +16,6 @@
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false,
-            "env": 
-            {
-                "SERVERMANAGER_DOWNLOADHOSTURI": "http://localhost:5000",
-            },
             "envFile": "${workspaceFolder}/.env"
         },
         {
