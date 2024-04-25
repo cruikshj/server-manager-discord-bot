@@ -5,24 +5,17 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 
-public class BotService : IHostedService, IDisposable
+public class BotService(
+    IOptions<AppSettings> appSettings,
+    DiscordSocketClient client,
+    InteractionService interactionService,
+    IServiceProvider serviceProvider) 
+    : IHostedService, IDisposable
 {
-    public BotService(
-        IOptions<AppSettings> appSettings,
-        DiscordSocketClient client,
-        InteractionService interactionService,
-        IServiceProvider serviceProvider)
-    {
-        AppSettings = appSettings.Value;
-        Client = client;
-        InteractionService = interactionService;
-        ServiceProvider = serviceProvider;
-    }    
-
-    public AppSettings AppSettings { get; }
-    public InteractionService InteractionService { get; }
-    public IServiceProvider ServiceProvider { get; }
-    public DiscordSocketClient Client { get; }
+    public AppSettings AppSettings { get; } = appSettings.Value;
+    public InteractionService InteractionService { get; } = interactionService;
+    public IServiceProvider ServiceProvider { get; } = serviceProvider;
+    public DiscordSocketClient Client { get; } = client;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {

@@ -5,9 +5,8 @@ using Microsoft.AspNetCore.StaticFiles;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables("SERVERMANAGER_");
-
-builder.Services.AddOptions<AppSettings>()
-    .Bind(builder.Configuration);
+builder.Services.AddOptions<AppSettings>().Bind(builder.Configuration);
+builder.Services.ConfigureOptions<AppSettingsSetup>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddTransient<IContentTypeProvider, FileExtensionContentTypeProvider>();

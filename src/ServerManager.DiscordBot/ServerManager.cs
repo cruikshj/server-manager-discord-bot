@@ -3,21 +3,14 @@ using Microsoft.Extensions.Options;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-public class ServerManager
+public class ServerManager(
+    IOptions<AppSettings> appSettings,
+    KubernetesClient kubernetesClient,
+    IMemoryCache memoryCache)
 {
-    public ServerManager(
-        IOptions<AppSettings> appSettings,
-        KubernetesClient kubernetesClient,
-        IMemoryCache memoryCache)
-    {
-        AppSettings = appSettings.Value;
-        KubernetesClient = kubernetesClient;
-        MemoryCache = memoryCache;
-    }
-
-    public AppSettings AppSettings { get; }
-    public KubernetesClient KubernetesClient { get; }
-    public IMemoryCache MemoryCache { get; }
+    public AppSettings AppSettings { get; } = appSettings.Value;
+    public KubernetesClient KubernetesClient { get; } = kubernetesClient;
+    public IMemoryCache MemoryCache { get; } = memoryCache;
     private static object ServersKey = new object();
 
     public async Task<IDictionary<string, ServerInfo>> GetServersAsync()

@@ -5,7 +5,11 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SmartFormat;
 
-public class ServersCommandModule(ServerManager serverManager, IMemoryCache memoryCache, IOptions<AppSettings> appSettings) : InteractionModuleBase
+public class ServersCommandModule(
+    ServerManager serverManager, 
+    IMemoryCache memoryCache, 
+    IOptions<AppSettings> appSettings) 
+    : InteractionModuleBase
 {
     public ServerManager ServerManager { get; } = serverManager;
     public IMemoryCache MemoryCache { get; } = memoryCache;
@@ -180,12 +184,12 @@ public class ServersCommandModule(ServerManager serverManager, IMemoryCache memo
                     await FollowupWithFileAsync(stream, fileName, ephemeral: true);
                 }
             }
-            else if (AppSettings.DownloadHostUri is not null)
+            else if (AppSettings.EnableLargeFileDownloads)
             {
                 var downloadKey = Guid.NewGuid();
-                MemoryCache.Set(downloadKey, fileInfo, AppSettings.DownloadCacheExpiration);
+                MemoryCache.Set(downloadKey, fileInfo, AppSettings.DownloadLinkExpiration);
 
-                var downloadUrl = new Uri(AppSettings.DownloadHostUri, $"/download/{downloadKey}");
+                var downloadUrl = new Uri(AppSettings.HostUri, $"/download/{downloadKey}");
 
                 await FollowupAsync($"The file is too large to send directly. Download it from [here]({downloadUrl}).", ephemeral: true);
             }

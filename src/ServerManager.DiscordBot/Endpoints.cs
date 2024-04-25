@@ -8,7 +8,7 @@ public static class Endpoints
     {
         var appSettings = app.Services.GetRequiredService<IOptions<AppSettings>>().Value;
         
-        if (appSettings.DownloadHostUri is not null)
+        if (appSettings.EnableLargeFileDownloads)
         {
             app.MapGet("/download/{key:guid}", (IMemoryCache memoryCache, IContentTypeProvider contentTypeProvider, HttpContext context, Guid key) =>
             {
