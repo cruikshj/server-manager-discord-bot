@@ -8,7 +8,8 @@ public class KubernetesClient(IOptions<AppSettings> appSettings)
     public AppSettings AppSettings { get; } = appSettings.Value;
 
     public KubernetesClientConfiguration KubeConfig { get; } = 
-        !string.IsNullOrEmpty(appSettings.Value.KubeConfigPath) ? KubernetesClientConfiguration.BuildConfigFromConfigFile(appSettings.Value.KubeConfigPath) :
+        !string.IsNullOrEmpty(appSettings.Value.KubeConfigPath) ? 
+        KubernetesClientConfiguration.BuildConfigFromConfigFile(appSettings.Value.KubeConfigPath) :
         KubernetesClientConfiguration.InClusterConfig();
 
     public async Task<IDictionary<string, string>> GetServerConfigMapDataAsync()
