@@ -7,7 +7,7 @@ public class ServerInfo
 
     public string? Readme { get; set; }
     
-    public string? BackupsPath { get; set; }
+    public string? FilesPath { get; set; }
 
     public string? Deployment { get; set; }
 

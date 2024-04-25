@@ -115,19 +115,19 @@ public class ServerManager(
         }
     }
 
-    public async Task<IEnumerable<FileInfo>> GetServerBackupFilesAsync(string name)
+    public async Task<IEnumerable<FileInfo>> GetServerFilesAsync(string name)
     {
         var server = await GetServerInfoAsync(name);
 
-        if (server.BackupsPath == null)
+        if (server.FilesPath == null)
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
         }
 
-        var directory = new DirectoryInfo(server.BackupsPath);
+        var directory = new DirectoryInfo(server.FilesPath);
         if (!directory.Exists)
         {
-            throw new DirectoryNotFoundException($"The `{name}` server backup directory `{server.BackupsPath}` does not exist.");
+            throw new DirectoryNotFoundException($"The `{name}` server files directory `{server.FilesPath}` does not exist.");
         }
 
         var files = directory.EnumerateFiles();
@@ -135,19 +135,19 @@ public class ServerManager(
         return files;
     }
 
-    public async Task<FileInfo> GetServerBackupFileAsync(string name, string fileName)
+    public async Task<FileInfo> GetServerFileAsync(string name, string fileName)
     {
         var server = await GetServerInfoAsync(name);
 
-        if (server.BackupsPath == null)
+        if (server.FilesPath == null)
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
         }
 
-        var filePath = Path.Combine(server.BackupsPath, fileName);
+        var filePath = Path.Combine(server.FilesPath, fileName);
         if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException($"The `{name}` server backup file `{fileName}` does not exist.");
+            throw new FileNotFoundException($"The `{name}` server file `{fileName}` does not exist.");
         }
 
         return new FileInfo(filePath);

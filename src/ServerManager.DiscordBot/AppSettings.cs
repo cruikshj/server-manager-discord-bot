@@ -11,6 +11,8 @@ public class AppSettings
     public string? KubeConfigPath { get; set; }
 
     public required string ServerConfigMapLabelSelector { get; set; } = "server-manager=default";
+
+    public bool EnableFileDownloads { get; set; } = true;
     
     public bool EnableLargeFileDownloads { get; set; } = false;
 

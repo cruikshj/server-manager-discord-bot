@@ -92,10 +92,10 @@ public class ServersCommandModule(
             actionsRow
                 .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
         }
-        if (!string.IsNullOrWhiteSpace(info.BackupsPath))
+        if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
         {
             actionsRow
-                .WithButton("Backups", $"backups|{name}", ButtonStyle.Secondary);
+                .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
         }
 
         await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
@@ -133,24 +133,30 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("backups|*")]
-    public async Task Backups(string name)
+    [ComponentInteraction("files|*")]
+    public async Task Files(string name)
     {
+        if (!AppSettings.EnableFileDownloads)
+        {
+            await FollowupAsync("File downloads are disabled.", ephemeral: true);
+            return;
+        }
+
         await DeferAsync(ephemeral: true);
         try
         {
-            var files = (await ServerManager.GetServerBackupFilesAsync(name)).ToArray();
+            var files = (await ServerManager.GetServerFilesAsync(name)).ToArray();
 
             if (files.Length == 0)
             {
-                await FollowupAsync("No backup files found.", ephemeral: true);
+                await FollowupAsync("No files found.", ephemeral: true);
                 return;
             }
 
             files = files.OrderByDescending(f => f.Name).ToArray();
 
             var selectMenu = new SelectMenuBuilder();
-            selectMenu.CustomId = $"backup|{name}";
+            selectMenu.CustomId = $"file|{name}";
             selectMenu.WithOptions(files.Select(f => new SelectMenuOptionBuilder() {
                 Label = f.Name,
                 Value = f.Name
@@ -161,7 +167,7 @@ public class ServersCommandModule(
             component.WithRows([row]);
             row.WithSelectMenu(selectMenu);
 
-            await FollowupAsync($"Select a `{name}` server backup file to download:", components: component.Build(), ephemeral: true);
+            await FollowupAsync($"Select a `{name}` server file to download:", components: component.Build(), ephemeral: true);
         }
         catch (Exception ex)
         {
@@ -169,13 +175,19 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("backup|*")]
-    public async Task DownloadBackup(string name, string fileName)
+    [ComponentInteraction("file|*")]
+    public async Task DownloadFile(string name, string fileName)
     {
+        if (!AppSettings.EnableFileDownloads)
+        {
+            await FollowupAsync("File downloads are disabled.", ephemeral: true);
+            return;
+        }
+        
         await DeferAsync(ephemeral: true);
         try
         {
-            var fileInfo = await ServerManager.GetServerBackupFileAsync(name, fileName);
+            var fileInfo = await ServerManager.GetServerFileAsync(name, fileName);
 
             if (fileInfo.Length < 25 * 1024 * 1024) // 25MB for Discord files
             {
