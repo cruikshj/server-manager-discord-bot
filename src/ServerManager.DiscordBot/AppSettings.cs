@@ -8,10 +8,6 @@ public class AppSettings
 
     public TimeSpan ServersCacheExpiration { get; set; } = TimeSpan.FromMinutes(5);
 
-    public string? KubeConfigPath { get; set; }
-
-    public required string ServerConfigMapLabelSelector { get; set; } = "server-manager=default";
-
     public bool EnableFileDownloads { get; set; } = true;
     
     public LargeFileDownloadHandlerType LargeFileDownloadHandler { get; set; } = LargeFileDownloadHandlerType.Disabled;

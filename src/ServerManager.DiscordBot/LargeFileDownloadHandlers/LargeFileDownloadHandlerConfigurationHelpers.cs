@@ -1,8 +1,10 @@
-public static class WebApplicationBuilderExtensions
+public static class LargeFileDownloadHandlerConfigurationHelpers
 {
+    public static readonly string LargeFileDownloadHandlerKey = "LargeFileDownloadHandler";
+
     public static WebApplicationBuilder ConfigureLargeFileDownloadHandler(this WebApplicationBuilder builder)
     {
-        var type = builder.Configuration.GetValue<LargeFileDownloadHandlerType>("LargeFileDownloadHandler");
+        var type = builder.Configuration.GetValue<LargeFileDownloadHandlerType>(LargeFileDownloadHandlerKey);
 
         switch (type)
         {

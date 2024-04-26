@@ -1,37 +1,35 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 public class ServerManager(
     IOptions<AppSettings> appSettings,
     KubernetesClient kubernetesClient,
-    IMemoryCache memoryCache)
+    IMemoryCache memoryCache,
+    IEnumerable<IServerInfoProvider> serverInfoProviders)
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
     public KubernetesClient KubernetesClient { get; } = kubernetesClient;
     public IMemoryCache MemoryCache { get; } = memoryCache;
+    public IEnumerable<IServerInfoProvider> ServerInfoProviders { get; } = serverInfoProviders;
+
     private static object ServersKey = new object();
 
-    public async Task<IDictionary<string, ServerInfo>> GetServersAsync()
+    public async Task<IDictionary<string, ServerInfo>> GetServersAsync(CancellationToken cancellationToken = default)
     {
         if (MemoryCache.TryGetValue(ServersKey, out Dictionary<string, ServerInfo>? servers) && servers != null)
         {
             return servers;
         }
 
-        var configMapData = await KubernetesClient.GetServerConfigMapDataAsync();
-
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
-
         servers = new Dictionary<string, ServerInfo>();
 
-        foreach (var (name, data) in configMapData)
+        foreach (var provider in ServerInfoProviders)
         {
-            var server = deserializer.Deserialize<ServerInfo>(data);
-            servers.Add(name, server);
+            var providerServers = await provider.GetServerInfoAsync(cancellationToken);
+            foreach (var (name, server) in providerServers)
+            {
+                servers[name] = server;
+            }
         }
 
         MemoryCache.Set(ServersKey, servers, AppSettings.ServersCacheExpiration);

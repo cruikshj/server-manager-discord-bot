@@ -12,24 +12,6 @@ public class KubernetesClient(IOptions<AppSettings> appSettings)
         KubernetesClientConfiguration.BuildConfigFromConfigFile(appSettings.Value.KubeConfigPath) :
         KubernetesClientConfiguration.InClusterConfig();
 
-    public async Task<IDictionary<string, string>> GetServerConfigMapDataAsync()
-    {
-        using var client = new Kubernetes(KubeConfig);
-        var configMaps = await client.ListConfigMapForAllNamespacesAsync(labelSelector: AppSettings.ServerConfigMapLabelSelector);
-
-        var result = new Dictionary<string, string>();
-
-        foreach (var configMap in configMaps.Items)
-        {
-            foreach (var item in configMap.Data)
-            {
-                result.Add(item.Key, item.Value);
-            }
-        }
-
-        return result;
-    }
-
     public async Task<ServerStatus> GetDeploymentStatusAsync(string deploymentName)
     {
         var metadata = ParseDeploymentName(deploymentName);
