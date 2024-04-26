@@ -14,7 +14,7 @@ public class AppSettings
 
     public bool EnableFileDownloads { get; set; } = true;
     
-    public bool EnableLargeFileDownloads { get; set; } = false;
+    public LargeFileDownloadHandlerType LargeFileDownloadHandler { get; set; } = LargeFileDownloadHandlerType.Disabled;
 
     public TimeSpan DownloadLinkExpiration { get; set; } = TimeSpan.FromDays(1);
 }

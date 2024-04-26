@@ -6,14 +6,14 @@ using Microsoft.Extensions.Options;
 using SmartFormat;
 
 public class ServersCommandModule(
-    ServerManager serverManager, 
-    IMemoryCache memoryCache, 
-    IOptions<AppSettings> appSettings) 
+    IOptions<AppSettings> appSettings,
+    ServerManager serverManager,
+    ILargeFileDownloadHandler? largeFileDownloadHandler = null) 
     : InteractionModuleBase
 {
-    public ServerManager ServerManager { get; } = serverManager;
-    public IMemoryCache MemoryCache { get; } = memoryCache;
     public AppSettings AppSettings { get; } = appSettings.Value;
+    public ServerManager ServerManager { get; } = serverManager;
+    public ILargeFileDownloadHandler? LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
 
     [SlashCommand("servers", "Display server information.")]
     public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))]string? name = null)
@@ -196,12 +196,9 @@ public class ServersCommandModule(
                     await FollowupWithFileAsync(stream, fileName, ephemeral: true);
                 }
             }
-            else if (AppSettings.EnableLargeFileDownloads)
+            else if (LargeFileDownloadHandler is not null)
             {
-                var downloadKey = Guid.NewGuid();
-                MemoryCache.Set(downloadKey, fileInfo, AppSettings.DownloadLinkExpiration);
-
-                var downloadUrl = new Uri(AppSettings.HostUri, $"/download/{downloadKey}");
+                var downloadUrl = await LargeFileDownloadHandler.GetDownloadUrlAsync(fileInfo);
 
                 await FollowupAsync($"The file is too large to send directly. Download it from [here]({downloadUrl}).", ephemeral: true);
             }

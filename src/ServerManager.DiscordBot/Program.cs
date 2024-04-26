@@ -1,6 +1,5 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,15 +8,22 @@ builder.Services.AddOptions<AppSettings>().Bind(builder.Configuration);
 builder.Services.ConfigureOptions<AppSettingsSetup>();
 
 builder.Services.AddMemoryCache();
-builder.Services.AddTransient<IContentTypeProvider, FileExtensionContentTypeProvider>();
+
 builder.Services.AddSingleton<DiscordSocketClient>();
 builder.Services.AddSingleton<InteractionService>();
+builder.Services.AddHostedService<BotService>();
+
 builder.Services.AddSingleton<ServerManager>();
 builder.Services.AddSingleton<KubernetesClient>();
-builder.Services.AddHostedService<BotService>();
+
+builder.ConfigureLargeFileDownloadHandler();
 
 var app = builder.Build();
 
-app.MapEndpoints();
+var lfdHandler = app.Services.GetService<ILargeFileDownloadHandler>();
+if (lfdHandler is not null)
+{
+    lfdHandler.MapEndpoints(app);
+}
 
 app.Run();
