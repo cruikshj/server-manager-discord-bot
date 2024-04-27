@@ -447,3 +447,4 @@ $RECYCLE.BIN/
 ##
 kubeconfig.yaml
 .env
+localconfig.*

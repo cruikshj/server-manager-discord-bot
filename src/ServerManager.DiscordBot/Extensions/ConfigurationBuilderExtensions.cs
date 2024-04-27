@@ -15,7 +15,6 @@ public static class ConfigurationBuilderExtensions
                 case ".json":
                     builder.AddJsonFile(file, optional: true);
                     break;
-                case ".yaml":
                 case ".yml":
                     builder.AddYamlFile(file, optional: true);
                     break;
