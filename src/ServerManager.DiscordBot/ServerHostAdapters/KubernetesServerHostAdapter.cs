@@ -72,17 +72,17 @@ public class KubernetesServerHostAdapter(
         }
     }
 
-    public Task StartServerAsync(string identifier, CancellationToken cancellationToken = default)
+    public async Task StartServerAsync(string identifier, CancellationToken cancellationToken = default)
     {
-        return SetServerReplicasAsync(identifier, 1, cancellationToken);
+        await SetServerReplicasAsync(identifier, 1, cancellationToken);
     }
 
-    public Task StopServerAsync(string identifier, CancellationToken cancellationToken = default)
+    public async Task StopServerAsync(string identifier, CancellationToken cancellationToken = default)
     {
-        return SetServerReplicasAsync(identifier, 0, cancellationToken);
+        await SetServerReplicasAsync(identifier, 0, cancellationToken);
     }
 
-    private Task SetServerReplicasAsync(string identifier, int replicas, CancellationToken cancellationToken)
+    private async Task SetServerReplicasAsync(string identifier, int replicas, CancellationToken cancellationToken)
     {
         var metadata = ParseIdentifier(identifier);
         
@@ -90,20 +90,25 @@ public class KubernetesServerHostAdapter(
 
         var patch = new V1Patch($@"{{ ""spec"": {{ ""replicas"": {replicas} }} }}", V1Patch.PatchType.MergePatch);
 
-        return metadata.Kind switch
+        switch (metadata.Kind)
         {
-            "Deployment" => client.PatchNamespacedDeploymentScaleAsync(
-                patch,
-                metadata.Name, 
-                metadata.Namespace,
-                cancellationToken: cancellationToken),
-            "StatefulSet" => client.PatchNamespacedStatefulSetScaleAsync(
-                patch,
-                metadata.Name, 
-                metadata.Namespace,
-                cancellationToken: cancellationToken),
-            _ => throw new NotSupportedException($"Kind {metadata.Kind} is not supported.")
-        };
+            case "Deployment":
+                await client.PatchNamespacedDeploymentScaleAsync(
+                    patch,
+                    metadata.Name, 
+                    metadata.Namespace,
+                    cancellationToken: cancellationToken);
+                break;
+            case "StatefulSet":
+                await client.PatchNamespacedStatefulSetScaleAsync(
+                    patch,
+                    metadata.Name, 
+                    metadata.Namespace,
+                    cancellationToken: cancellationToken);
+                break;
+            default:
+                throw new NotSupportedException($"Kind {metadata.Kind} is not supported.");
+        }
     }
 
     public async Task<IDictionary<string, Stream>> GetServerLogsAsync(string identifier, CancellationToken cancellationToken = default)
