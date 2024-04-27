@@ -28,7 +28,6 @@ public class BotService(
         Client.SlashCommandExecuted += CommandHandler;
         Client.SelectMenuExecuted += CommandHandler;
         Client.AutocompleteExecuted += CommandHandler;
-        Client.MessageReceived += MessageHandler;
 
         await InteractionService.AddModulesAsync(Assembly.GetEntryAssembly(), ServiceProvider);
 
@@ -47,7 +46,6 @@ public class BotService(
         Client.SlashCommandExecuted -= CommandHandler;
         Client.SelectMenuExecuted -= CommandHandler;
         Client.AutocompleteExecuted -= CommandHandler;
-        Client.MessageReceived -= MessageHandler;
     }
 
     public void Dispose()
@@ -66,19 +64,6 @@ public class BotService(
     {
         var context = new SocketInteractionContext(Client, interaction);
         await InteractionService.ExecuteCommandAsync(context, ServiceProvider);
-    }
-
-    private async Task MessageHandler(SocketMessage message)
-    {
-        int argPos = 0;
-        if (message is not SocketUserMessage userMessage ||
-            userMessage.Source != MessageSource.User ||
-            !userMessage.HasMentionPrefix(Client.CurrentUser, ref argPos))
-        {
-            return;
-        }
-
-        await userMessage.ReplyAsync("Don't @ me. Use `/servers` instead.");
     }
 
     private async Task RegisterCommandsAsync()

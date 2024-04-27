@@ -13,7 +13,12 @@ builder.Services.ConfigureOptions<AppSettingsSetup>();
 
 builder.Services.AddMemoryCache();
 
-builder.Services.AddSingleton<DiscordSocketClient>();
+builder.Services.AddSingleton(sp => {
+    return new DiscordSocketClient(new DiscordSocketConfig
+    {
+        GatewayIntents = Discord.GatewayIntents.None
+    });
+});
 builder.Services.AddSingleton<InteractionService>();
 builder.Services.AddHostedService<BotService>();
 
