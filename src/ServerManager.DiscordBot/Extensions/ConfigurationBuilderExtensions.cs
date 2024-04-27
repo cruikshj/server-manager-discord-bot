@@ -1,7 +1,12 @@
 public static class ConfigurationBuilderExtensions
 {
-    public static IConfigurationBuilder AddConfigurationDirectory(this IConfigurationBuilder builder, string directory)
+    public static IConfigurationBuilder AddDirectory(this IConfigurationBuilder builder, string directory)
     {
+        if (!Directory.Exists(directory))
+        {
+            return builder;
+        }
+
         foreach (var file in Directory.EnumerateFiles(directory))
         {
             var extension = Path.GetExtension(file);

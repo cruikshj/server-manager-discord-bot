@@ -11,6 +11,9 @@ public static class LargeFileDownloadHandlerConfigurationHelpers
             case LargeFileDownloadHandlerType.BuiltIn:
                 builder.Services.AddTransient<ILargeFileDownloadHandler, BuiltInLargeFileDownloadHandler>();
                 break;
+            default:
+                builder.Services.AddTransient<ILargeFileDownloadHandler, DisabledLargeFileDownloadHandler>();
+                break;
         }
         
         return builder;

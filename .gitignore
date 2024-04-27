@@ -442,4 +442,8 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 
+##
+## Local environment
+##
 kubeconfig.yaml
+.env

@@ -7,12 +7,12 @@ using SmartFormat;
 public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
     ServerManager serverManager,
-    ILargeFileDownloadHandler? largeFileDownloadHandler = null) 
+    ILargeFileDownloadHandler largeFileDownloadHandler) 
     : InteractionModuleBase
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
     public ServerManager ServerManager { get; } = serverManager;
-    public ILargeFileDownloadHandler? LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
+    public ILargeFileDownloadHandler LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
 
     [SlashCommand("servers", "Display server information.")]
     public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))]string? name = null)
@@ -195,7 +195,7 @@ public class ServersCommandModule(
                     await FollowupWithFileAsync(stream, fileName, ephemeral: true);
                 }
             }
-            else if (LargeFileDownloadHandler is not null)
+            else if (AppSettings.LargeFileDownloadHandler != LargeFileDownloadHandlerType.Disabled)
             {
                 var downloadUrl = await LargeFileDownloadHandler.GetDownloadUrlAsync(fileInfo);
 
