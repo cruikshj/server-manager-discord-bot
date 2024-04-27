@@ -13,4 +13,6 @@ public class AppSettings
     public LargeFileDownloadHandlerType LargeFileDownloadHandler { get; set; } = LargeFileDownloadHandlerType.Disabled;
 
     public TimeSpan DownloadLinkExpiration { get; set; } = TimeSpan.FromDays(1);
+
+    public TimeSpan ServerStatusWaitTimeout { get; set; } = TimeSpan.FromMinutes(10);
 }

@@ -1,7 +1,6 @@
 using System.Text;
 using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SmartFormat;
 
@@ -80,7 +79,7 @@ public class ServersCommandModule(
         var component = new ComponentBuilder();
         var actionsRow = new ActionRowBuilder();
         component.WithRows([actionsRow]);
-        if (!string.IsNullOrWhiteSpace(info.Deployment))
+        if (info.HasServerHost)
         {
             actionsRow
                 .WithButton("Start", $"start|{name}", ButtonStyle.Success)

@@ -17,9 +17,8 @@ builder.Services.AddSingleton<InteractionService>();
 builder.Services.AddHostedService<BotService>();
 
 builder.Services.AddSingleton<ServerManager>();
-builder.Services.AddSingleton<KubernetesClient>();
-
 builder.ConfigureServerInfoProviders();
+builder.ConfigureServerHostAdapters();
 builder.ConfigureLargeFileDownloadHandler();
 
 var app = builder.Build();

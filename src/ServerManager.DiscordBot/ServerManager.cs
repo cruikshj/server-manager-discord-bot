@@ -1,17 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 public class ServerManager(
     IOptions<AppSettings> appSettings,
-    KubernetesClient kubernetesClient,
     IMemoryCache memoryCache,
-    IEnumerable<IServerInfoProvider> serverInfoProviders)
+    IEnumerable<IServerInfoProvider> serverInfoProviders,
+    IServiceProvider serviceProvider)
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
-    public KubernetesClient KubernetesClient { get; } = kubernetesClient;
     public IMemoryCache MemoryCache { get; } = memoryCache;
     public IEnumerable<IServerInfoProvider> ServerInfoProviders { get; } = serverInfoProviders;
-
+    public IServiceProvider ServiceProvider { get; } = serviceProvider;
     private static object ServersKey = new object();
 
     public async Task<IDictionary<string, ServerInfo>> GetServersAsync(CancellationToken cancellationToken = default)
@@ -37,9 +37,9 @@ public class ServerManager(
         return servers;
     }
 
-    public async Task<ServerInfo> GetServerInfoAsync(string name)
+    public async Task<ServerInfo> GetServerInfoAsync(string name, CancellationToken cancellationToken = default)
     {
-        var servers = await GetServersAsync();
+        var servers = await GetServersAsync(cancellationToken);
 
         if (!servers.TryGetValue(name, out var server))
         {
@@ -49,33 +49,33 @@ public class ServerManager(
         return server;
     }
 
-    public async Task<ServerStatus?> GetServerStatusAsync(string name)
+    public async Task<ServerStatus?> GetServerStatusAsync(string name, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(server.Deployment))
+        if (TryGetServerHost(server, out var adapter, out var identifier))
         {
-            return await KubernetesClient.GetDeploymentStatusAsync(server.Deployment);
+            return await adapter.GetServerStatusAsync(identifier, cancellationToken);
         }
 
         return null;
     }
 
-    public async Task StartServerAsync(string name, bool wait = false)
+    public async Task StartServerAsync(string name, bool wait = false, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(server.Deployment))
+        if (TryGetServerHost(server, out var adapter, out var identifier))
         {
-            await KubernetesClient.StartDeploymentAsync(
-                server.Deployment);
+            await adapter.StartServerAsync(identifier, cancellationToken);
             
             if (wait)
             {
-                if (!await KubernetesClient.WaitForDeploymentStatusAsync(
-                    server.Deployment,
+                if (!await adapter.WaitForServerStatusAsync(
+                    identifier,
                     ServerStatus.Running,
-                    TimeSpan.FromMinutes(10)))
+                    AppSettings.ServerStatusWaitTimeout,
+                    cancellationToken))
                 {
                     throw new TimeoutException($"The `{name}` server did not start within the timeout period.");
                 }
@@ -87,21 +87,21 @@ public class ServerManager(
         }
     }
 
-    public async Task StopServerAsync(string name, bool wait = false)
+    public async Task StopServerAsync(string name, bool wait = false, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(server.Deployment))
+        if (TryGetServerHost(server, out var adapter, out var identifier))
         {
-            await KubernetesClient.StopDeploymentAsync(
-                server.Deployment);
+            await adapter.StopServerAsync(identifier, cancellationToken);
 
             if (wait)
             {
-                if (!await KubernetesClient.WaitForDeploymentStatusAsync(
-                    server.Deployment,
+                if (!await adapter.WaitForServerStatusAsync(
+                    identifier,
                     ServerStatus.Stopped,
-                    TimeSpan.FromMinutes(10)))
+                    AppSettings.ServerStatusWaitTimeout,
+                    cancellationToken))
                 {
                     throw new TimeoutException($"The `{name}` server did not stop within the timeout period.");
                 }
@@ -113,11 +113,11 @@ public class ServerManager(
         }
     }
 
-    public async Task<IEnumerable<FileInfo>> GetServerFilesAsync(string name)
+    public async Task<IEnumerable<FileInfo>> GetServerFilesAsync(string name, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (server.FilesPath == null)
+        if (string.IsNullOrWhiteSpace(server.FilesPath))
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
         }
@@ -133,11 +133,11 @@ public class ServerManager(
         return files;
     }
 
-    public async Task<FileInfo> GetServerFileAsync(string name, string fileName)
+    public async Task<FileInfo> GetServerFileAsync(string name, string fileName, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (server.FilesPath == null)
+        if (string.IsNullOrWhiteSpace(server.FilesPath))
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
         }
@@ -151,17 +151,40 @@ public class ServerManager(
         return new FileInfo(filePath);
     }
 
-    public async Task<IDictionary<string, Stream>> GetServerLogsAsync(string name)
+    public async Task<IDictionary<string, Stream>> GetServerLogsAsync(string name, CancellationToken cancellationToken = default)
     {
-        var server = await GetServerInfoAsync(name);
+        var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(server.Deployment))
+        if (TryGetServerHost(server, out var adapter, out var identifier))
         {
-            return await KubernetesClient.GetDeploymentLogsAsync(server.Deployment);
+            return await adapter.GetServerLogsAsync(identifier);
         }
         else
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
         }
+    }
+
+    private bool TryGetServerHost(
+        ServerInfo server, 
+        [NotNullWhen(true)]out IServerHostAdapter? serverHostAdapter, 
+        [NotNullWhen(true)]out string? serverHostIdentifier)
+    {
+        if (!server.HasServerHost)
+        {
+            serverHostAdapter = null;
+            serverHostIdentifier = null;
+            return false;
+        }
+
+        serverHostAdapter = ServiceProvider.GetKeyedService<IServerHostAdapter>(server.ServerHostAdapter);
+        serverHostIdentifier = server.ServerHostIdentifier!;
+
+        if (serverHostAdapter == null)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
