@@ -4,10 +4,14 @@ This repository represents a Discord Bot application for managing dedicated game
 
 ## Features
 
-- Displays list of configured servers using `/servers` command
+- Displays list of configured servers using `/servers` command  
+
   ![list](https://raw.githubusercontent.com/cruikshj/server-manager-discord-bot/main/assets/info.png)
-- Displays detailed server information using `/servers <name>` command
+  
+- Displays detailed server information using `/servers <name>` command  
+
   ![info](https://raw.githubusercontent.com/cruikshj/server-manager-discord-bot/main/assets/list.png)
+
 - Provides server readme through using interactions
 - Provides server files (such as backups, saves and mod files) using interactions
 - Kubernetes integration
