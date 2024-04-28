@@ -3,6 +3,7 @@ using Discord.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddYamlFile("appsettings.yaml", optional: true);
 builder.Configuration.AddYamlFile("appsettings.yml", optional: true);
 builder.Configuration.AddDirectory("Config");
 

@@ -13,7 +13,7 @@ public class AppSettingsSetup(
         if (appSettings.HostUri is null)
         {
             var serverAddressesFeature = Server.Features.Get<IServerAddressesFeature>();
-            var address = serverAddressesFeature?.Addresses.FirstOrDefault() ?? "http://localhost:5000";
+            var address = serverAddressesFeature?.Addresses.FirstOrDefault() ?? "http://localhost:8080";
             if (address is not null)
             {
                 appSettings.HostUri = new Uri(address);

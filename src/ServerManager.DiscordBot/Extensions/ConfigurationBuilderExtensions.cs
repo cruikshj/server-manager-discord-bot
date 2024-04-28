@@ -16,13 +16,8 @@ public static class ConfigurationBuilderExtensions
                     builder.AddJsonFile(file, optional: true);
                     break;
                 case ".yml":
+                case ".yaml":
                     builder.AddYamlFile(file, optional: true);
-                    break;
-                case ".xml":
-                    builder.AddXmlFile(file, optional: true);
-                    break;
-                case ".ini":
-                    builder.AddIniFile(file, optional: true);
                     break;
             }
         }
