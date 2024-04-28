@@ -95,7 +95,7 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 
 | Section | Description | Default |
 |---|---|---|
-| <Key> | (Required) The section key or name is used to lookup the adapter matching the `ServerHostAdapter` value on server info. | |
+| -Key- | (Required) The section key or name is used to lookup the adapter matching the `ServerHostAdapter` value on server info. | |
 | Type | (Required) The type of the adapter.  Can be `Kubernetes`. | |
 | KubeConfigPath (Kubernetes) | The path to a Kube Config file to use to connect to Kubernetes. If not provided, `InCluster` configuration will be used. | |
 
@@ -103,7 +103,7 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 
 | Section | Description | Default |
 |---|---|---|
-| <Key> | (Required) The section key or name is used as the name of the server for the purposes of the bot interactions. | |
+| -Key- | (Required) The section key or name is used as the name of the server for the purposes of the bot interactions. | |
 | Game | The display name of the game. | |
 | Icon | The icon of the game. | |
 | Readme | A multiline text field that can be provided by bot interaction. This value supports string formatting using the server info object in the form of "{Game}" or "{Fields.Whatever}" | |
