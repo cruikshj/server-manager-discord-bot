@@ -1,0 +1,41 @@
+name: .NET Publish
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Publish (linux-x64)
+      run: dotnet publish -c Release -r linux-x64 --self-contained -o ${{ github.workspace }}/publish/linux-x64
+    - name: Publish (win-x64)
+      run: dotnet publish -c Release -r win-x64 --self-contained -o ${{ github.workspace }}/publish/win-x64
+    - name: Upload release asset (linux-x64)
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ${{ github.workspace }}/publish/linux-x64/ServerManager.DiscordBot
+        asset_name: ServerManager.DiscordBot_${{ github.event.release.tag_name }}_linux-x64
+        asset_content_type: application/octet-stream
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload release asset (win-x64)
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ${{ github.workspace }}/publish/win-x64/ServerManager.DiscordBot.exe
+        asset_name: ServerManager.DiscordBot_${{ github.event.release.tag_name }}_win-x64.exe
+        asset_content_type: application/octet-stream
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

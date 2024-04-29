@@ -26,9 +26,15 @@ In order to self-host this bot application, you will need to register an applica
 
 ### Installation
 
+#### Docker
+
 This bot application is distributed as a Docker image and therefore can be hosted in a variety of ways, such as Docker, Docker Compose, Kubernetes, etc.  This application communicates with Discord over a socket connect and virtually all the functionality is avaialable without exposing any ports or endpoints. One optional feature enabling large file downloads would require exposure, but more on that in the configuration section.
  
 The Docker image is available here: [server-manager-discord-bot](https://github.com/cruikshj/server-manager-discord-bot/pkgs/container/server-manager-discord-bot)
+
+#### Executable
+
+This bot application is distributed as a self-contained executable.  The executable is available as an asset on [releases](https://github.com/cruikshj/server-manager-discord-bot/releases).
 
 ### Configuration
 
