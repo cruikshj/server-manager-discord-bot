@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-public class ExecutableServerHostProperties
+public class ProcessServerHostProperties
 {
     [Required]
     public string FileName { get; set; } = default!;

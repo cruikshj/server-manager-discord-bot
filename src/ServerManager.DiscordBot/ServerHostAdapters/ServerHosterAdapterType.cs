@@ -1,5 +1,5 @@
 public enum ServerHosterAdapterType
 {
-    Executable,
+    Process,
     Kubernetes
 }

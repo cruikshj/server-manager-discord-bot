@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 
-public class ExecutableServerHostAdapter(
-    IOptions<ExecutableServerHostAdapterOptions> options)
-    : ServerHostAdapterBase<ExecutableServerHostProperties>
+public class ProcessServerHostAdapter(
+    IOptions<ProcessServerHostAdapterOptions> options)
+    : ServerHostAdapterBase<ProcessServerHostProperties>
 {
-    public ExecutableServerHostAdapterOptions Options { get; } = options.Value;
+    public ProcessServerHostAdapterOptions Options { get; } = options.Value;
 
     public override Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {

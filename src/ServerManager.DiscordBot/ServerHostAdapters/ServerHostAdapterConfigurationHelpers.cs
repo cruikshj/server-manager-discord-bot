@@ -14,12 +14,12 @@ public static class ServerHostAdapterConfigurationHelpers
             var adapterType = child.GetValue<ServerHosterAdapterType>("Type");
             switch (adapterType)
             {
-                case ServerHosterAdapterType.Executable:
-                    builder.Services.Configure<ExecutableServerHostAdapterOptions>(key, child);
-                    builder.Services.AddKeyedTransient<IServerHostAdapter, ExecutableServerHostAdapter>(key, (sp, sk) =>
+                case ServerHosterAdapterType.Process:
+                    builder.Services.Configure<ProcessServerHostAdapterOptions>(key, child);
+                    builder.Services.AddKeyedTransient<IServerHostAdapter, ProcessServerHostAdapter>(key, (sp, sk) =>
                     {
-                        var options = sp.GetRequiredService<IOptionsSnapshot<ExecutableServerHostAdapterOptions>>().Get(key);
-                        return new ExecutableServerHostAdapter(options);
+                        var options = sp.GetRequiredService<IOptionsSnapshot<ProcessServerHostAdapterOptions>>().Get(key);
+                        return new ProcessServerHostAdapter(options);
                     });
                     break;
                 case ServerHosterAdapterType.Kubernetes:
