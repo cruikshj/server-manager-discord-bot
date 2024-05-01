@@ -9,6 +9,7 @@
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <RuntimeIdentifiers>win-x64;linux-x64;</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
