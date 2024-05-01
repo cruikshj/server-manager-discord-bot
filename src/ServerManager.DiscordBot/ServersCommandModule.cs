@@ -79,7 +79,7 @@ public class ServersCommandModule(
         var component = new ComponentBuilder();
         var actionsRow = new ActionRowBuilder();
         component.WithRows([actionsRow]);
-        if (info.HasServerHost)
+        if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
         {
             actionsRow
                 .WithButton("Start", $"start|{name}", ButtonStyle.Success)

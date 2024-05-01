@@ -53,9 +53,9 @@ public class ServerManager(
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (TryGetServerHost(server, out var adapter, out var identifier))
+        if (TryGetServerHostAdapter(name, server, out var adapter))
         {
-            return await adapter.GetServerStatusAsync(identifier, cancellationToken);
+            return await adapter.GetServerStatusAsync(cancellationToken);
         }
 
         return null;
@@ -65,14 +65,13 @@ public class ServerManager(
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (TryGetServerHost(server, out var adapter, out var identifier))
+        if (TryGetServerHostAdapter(name, server, out var adapter))
         {
-            await adapter.StartServerAsync(identifier, cancellationToken);
+            await adapter.StartServerAsync(cancellationToken);
             
             if (wait)
             {
                 if (!await adapter.WaitForServerStatusAsync(
-                    identifier,
                     ServerStatus.Running,
                     AppSettings.ServerStatusWaitTimeout,
                     cancellationToken))
@@ -91,14 +90,13 @@ public class ServerManager(
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (TryGetServerHost(server, out var adapter, out var identifier))
+        if (TryGetServerHostAdapter(name, server, out var adapter))
         {
-            await adapter.StopServerAsync(identifier, cancellationToken);
+            await adapter.StopServerAsync(cancellationToken);
 
             if (wait)
             {
                 if (!await adapter.WaitForServerStatusAsync(
-                    identifier,
                     ServerStatus.Stopped,
                     AppSettings.ServerStatusWaitTimeout,
                     cancellationToken))
@@ -155,9 +153,9 @@ public class ServerManager(
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
 
-        if (TryGetServerHost(server, out var adapter, out var identifier))
+        if (TryGetServerHostAdapter(name, server, out var adapter))
         {
-            return await adapter.GetServerLogsAsync(identifier);
+            return await adapter.GetServerLogsAsync(cancellationToken);
         }
         else
         {
@@ -165,25 +163,25 @@ public class ServerManager(
         }
     }
 
-    private bool TryGetServerHost(
+    private bool TryGetServerHostAdapter(
+        string serverName,
         ServerInfo server, 
-        [NotNullWhen(true)]out IServerHostAdapter? serverHostAdapter, 
-        [NotNullWhen(true)]out string? serverHostIdentifier)
+        [NotNullWhen(true)]out IServerHostAdapter? serverHostAdapter)
     {
-        if (!server.HasServerHost)
+        if (string.IsNullOrWhiteSpace(server.HostAdapterName))
         {
             serverHostAdapter = null;
-            serverHostIdentifier = null;
             return false;
         }
 
-        serverHostAdapter = ServiceProvider.GetKeyedService<IServerHostAdapter>(server.ServerHostAdapter);
-        serverHostIdentifier = server.ServerHostIdentifier!;
+        serverHostAdapter = ServiceProvider.GetKeyedService<IServerHostAdapter>(server.HostAdapterName);
 
         if (serverHostAdapter == null)
         {
             return false;
         }
+
+        serverHostAdapter.Context = new ServerHostContext(serverName, server.HostAdapterName, server.HostProperties);
 
         return true;
     }
