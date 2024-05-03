@@ -123,7 +123,7 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 | Readme | A multiline text field that can be provided by bot interaction. This value supports string formatting using the server info object in the form of "{Game}" or "{Fields.Whatever}" | |
 | FilesPath | This is a path to the files directory to be used to server files through interactions for this server. It should be a file path a mount drive for the bot container. The idea here is to utilize existing volume mount capabilities of hosting platforms like Docker and Kubernetes, to mount in whatever is necessary, such as an S3 bucket or NFS or host drive. | |
 | Fields | This is a map of free form fields, or key value pairs to display as part of the server info. | |
-| HostAdapter | The key for the `ServerHostAdapter` to use for this server. | |
+| HostAdapterName | The name of the `ServerHostAdapter` to use for this server. | |
 | HostProperties | The identifier to pass to the adapter. The child properties are determined by the adapter. |  |
 | HostProperties.FileName (Process) | The process filename. | |
 | HostProperties.Arguments (Process) | The process arguments. | |
