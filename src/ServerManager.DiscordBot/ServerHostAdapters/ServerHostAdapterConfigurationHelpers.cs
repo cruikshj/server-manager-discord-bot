@@ -22,6 +22,14 @@ public static class ServerHostAdapterConfigurationHelpers
                         return new ProcessServerHostAdapter(options);
                     });
                     break;
+                case ServerHosterAdapterType.DockerCompose:
+                    builder.Services.Configure<DockerComposeServerHostAdapterOptions>(key, child);
+                    builder.Services.AddKeyedTransient<IServerHostAdapter, DockerComposeServerHostAdapter>(key, (sp, sk) =>
+                    {
+                        var options = sp.GetRequiredService<IOptionsSnapshot<DockerComposeServerHostAdapterOptions>>().Get(key);
+                        return new DockerComposeServerHostAdapter(options);
+                    });
+                    break;
                 case ServerHosterAdapterType.Kubernetes:
                     builder.Services.Configure<KubernetesServerHostAdapterOptions>(key, child);
                     builder.Services.AddKeyedTransient<IServerHostAdapter, KubernetesServerHostAdapter>(key, (sp, sk) =>

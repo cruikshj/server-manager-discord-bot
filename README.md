@@ -14,9 +14,10 @@ This repository represents a Discord Bot application for managing dedicated game
 
 - Provides server readme through using interactions
 - Provides server files (such as backups, saves and mod files) using interactions
-- Kubernetes integration
-    - Start/Stop deployments and stateful sets using interactions
-    - Provides pod logs using interactions
+- Process, DockerCompose, and Kubernetes integrations
+    - Show server status
+    - Start/Stop servers using interactions
+    - Provides server logs using interactions
 
 ## Setup
 
@@ -107,8 +108,9 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 
 | Section | Description | Default |
 |---|---|---|
-| -Key- | (Required) The section key or name is used to lookup the adapter matching the `ServerHostAdapter` value on server info. | |
-| Type | (Required) The type of the adapter.  Can be `Kubernetes`. | |
+| -Key- | (Required) The section key or name is used to lookup the adapter matching the `HostAdapter` value on server info. | |
+| Type | (Required) The type of the adapter.  Can be `Process`, `DockerCompose`, or `Kubernetes`. | |
+| DockerProcessFilePath (DockerCompose) | The file name of the docker executable. | docker |
 | KubeConfigPath (Kubernetes) | The path to a Kube Config file to use to connect to Kubernetes. If not provided, `InCluster` configuration will be used. | |
 
 ##### Servers
@@ -121,8 +123,15 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 | Readme | A multiline text field that can be provided by bot interaction. This value supports string formatting using the server info object in the form of "{Game}" or "{Fields.Whatever}" | |
 | FilesPath | This is a path to the files directory to be used to server files through interactions for this server. It should be a file path a mount drive for the bot container. The idea here is to utilize existing volume mount capabilities of hosting platforms like Docker and Kubernetes, to mount in whatever is necessary, such as an S3 bucket or NFS or host drive. | |
 | Fields | This is a map of free form fields, or key value pairs to display as part of the server info. | |
-| ServerHostAdapter | The key for the `ServerHostAdapter` to use for this server. | |
-| ServerHostIdentifier | The identifier to pass to the adapter. The format is determined by the adapter. |  |
+| HostAdapter | The key for the `ServerHostAdapter` to use for this server. | |
+| HostProperties | The identifier to pass to the adapter. The child properties are determined by the adapter. |  |
+| HostProperties.FileName (Process) | The process filename. | |
+| HostProperties.Arguments (Process) | The process arguments. | |
+| HostProperties.WorkingDirectory (Process) | The working directory to use when starting the process. | |
+| HostProperties.DockerComposeFilePath (DockerCompose) | The file path to the docker compose configuration file for the server. | |
+| HostProperties.Kind (Kubernetes) | The workload kind. Can be `Deployment` or `StatefulSet`. | |
+| HostProperties.Namespace (Kubernetes) | The workload namespace. | |
+| HostProperties.Name (Kubernetes) | The workload name. | |
 
 ## Contribution
 

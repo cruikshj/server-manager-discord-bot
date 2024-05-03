@@ -17,6 +17,8 @@ public class ProcessServerHostAdapter(
             ? ServerStatus.Running
             : ServerStatus.Stopped;
 
+        processes.DisposeAll();
+
         return Task.FromResult(status);
     }
 
@@ -27,7 +29,7 @@ public class ProcessServerHostAdapter(
             throw new InvalidOperationException("Server is already running.");
         }
 
-        var process = new Process
+        using var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
@@ -59,13 +61,17 @@ public class ProcessServerHostAdapter(
         {
             process.Kill();
         }
+
+        processes.DisposeAll();
     }
 
-    public override Task<IDictionary<string, Stream>> GetServerLogsAsync(CancellationToken cancellationToken = default)
+    public override async Task<IDictionary<string, Stream>> GetServerLogsAsync(CancellationToken cancellationToken = default)
     {
         var processName = Path.GetFileName(Context.Properties.FileName);
 
-        var process = Process.GetProcessesByName(processName).FirstOrDefault();
+        var processes = Process.GetProcessesByName(processName);
+
+        var process = processes.FirstOrDefault();
 
         var logs = new Dictionary<string, Stream>();
 
@@ -74,7 +80,7 @@ public class ProcessServerHostAdapter(
             var outputStream = new MemoryStream();
             using (var writer = new StreamWriter(outputStream, leaveOpen: true))
             {
-                writer.Write(process.StandardOutput.ReadToEnd());
+                writer.Write(await process.StandardOutput.ReadToEndAsync());
             }
             if (outputStream.Length > 0)
             {
@@ -85,7 +91,7 @@ public class ProcessServerHostAdapter(
             var errorStream = new MemoryStream();
             using (var writer = new StreamWriter(errorStream, leaveOpen: true))
             {
-                writer.Write(process.StandardError.ReadToEnd());
+                writer.Write(await process.StandardError.ReadToEndAsync());
             }
             if (errorStream.Length > 0)
             {
@@ -94,6 +100,8 @@ public class ProcessServerHostAdapter(
             }
         }
 
-        return Task.FromResult<IDictionary<string, Stream>>(logs);
+        processes.DisposeAll();
+
+        return logs;
     }
 }
