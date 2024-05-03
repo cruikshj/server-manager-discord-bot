@@ -18,9 +18,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Publish (linux-x64)
-      run: dotnet publish -c Release -r linux-x64 --self-contained -o ${{ github.workspace }}/publish/linux-x64
+      run: dotnet ${{ github.workspace }}/src/ServerManager.DiscordBot publish -c Release -r linux-x64 --self-contained -o ${{ github.workspace }}/publish/linux-x64
     - name: Publish (win-x64)
-      run: dotnet publish -c Release -r win-x64 --self-contained -o ${{ github.workspace }}/publish/win-x64
+      run: dotnet publish ${{ github.workspace }}/src/ServerManager.DiscordBot -c Release -r win-x64 --self-contained -o ${{ github.workspace }}/publish/win-x64
     - name: Upload release asset (linux-x64)
       uses: actions/upload-release-asset@v1
       with:
