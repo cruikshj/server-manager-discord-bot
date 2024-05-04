@@ -77,24 +77,37 @@ public class ServersCommandModule(
         embed.WithCurrentTimestamp();
 
         var component = new ComponentBuilder();
-        var actionsRow = new ActionRowBuilder();
-        component.WithRows([actionsRow]);
+
         if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
         {
-            actionsRow
+            var hostActionsRow = new ActionRowBuilder();
+            hostActionsRow
                 .WithButton("Start", $"start|{name}", ButtonStyle.Success)
-                .WithButton("Stop", $"stop|{name}", ButtonStyle.Primary)
+                .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
+                .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
                 .WithButton("Logs", $"logs|{name}", ButtonStyle.Secondary);
+            component.AddRow(hostActionsRow);
         }
+
+        var contentActionsRow = new ActionRowBuilder();
+        var includeContentActionsRow = false;
+
         if (!string.IsNullOrWhiteSpace(info.Readme))
         {
-            actionsRow
+            contentActionsRow
                 .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
         }
         if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
         {
-            actionsRow
+            contentActionsRow
                 .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
+
+        if (includeContentActionsRow)
+        {
+            component.AddRow(contentActionsRow);
         }
 
         await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
@@ -125,6 +138,24 @@ public class ServersCommandModule(
             await ServerManager.StopServerAsync(name, wait: true); 
 
             await FollowupAsync($"{Context.User.GlobalName} stopped the `{name}` server.");
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("restart|*")]
+    public async Task Restart(string name)
+    {
+        await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
+        
+        try
+        {
+            await ServerManager.StopServerAsync(name, wait: true);
+            await ServerManager.StartServerAsync(name, wait: true);
+
+            await FollowupAsync($"{Context.User.GlobalName} restarted the `{name}` server.");
         }
         catch (Exception ex)
         {
