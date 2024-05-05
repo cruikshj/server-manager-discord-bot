@@ -26,8 +26,8 @@ public class DockerComposeServerHostAdapter(
         return status switch
         {
             "Up" => ServerStatus.Running,
-            "Exited" => ServerStatus.Stopped,
-            _ => ServerStatus.Unknown
+            "Created" => ServerStatus.Starting,
+            _ => ServerStatus.Stopped
         };
     }
 
@@ -81,7 +81,7 @@ public class DockerComposeServerHostAdapter(
             StartInfo = new ProcessStartInfo
             {
                 FileName = Options.DockerProcessFilePath,
-                Arguments = $"compose -f {Context.Properties.DockerComposeFilePath} {arguments}",
+                Arguments = $"compose --file {Context.Properties.DockerComposeFilePath} {arguments}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
