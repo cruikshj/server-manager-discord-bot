@@ -1,6 +1,5 @@
 using System.Reflection;
 using Discord;
-using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
@@ -9,11 +8,13 @@ public class BotService(
     IOptions<AppSettings> appSettings,
     DiscordSocketClient client,
     InteractionService interactionService,
+    ILogger<BotService> logger,
     IServiceProvider serviceProvider) 
     : IHostedService, IDisposable
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
     public InteractionService InteractionService { get; } = interactionService;
+    public ILogger Logger { get; } = logger;
     public IServiceProvider ServiceProvider { get; } = serviceProvider;
     public DiscordSocketClient Client { get; } = client;
 
@@ -83,7 +84,20 @@ public class BotService(
 
     private Task LogAsync(LogMessage message)
     {
-         Console.WriteLine($"[{message.Severity}] {message}");
+        Logger.Log(
+            logLevel: message.Severity switch
+            {
+                LogSeverity.Critical => LogLevel.Critical,
+                LogSeverity.Error => LogLevel.Error,
+                LogSeverity.Warning => LogLevel.Warning,
+                LogSeverity.Info => LogLevel.Information,
+                LogSeverity.Verbose => LogLevel.Trace,
+                LogSeverity.Debug => LogLevel.Debug,
+                _ => LogLevel.Information
+            },
+            message: message.Message,
+            exception: message.Exception,
+            eventId: new EventId(0));
          return Task.CompletedTask;
     }
 }
