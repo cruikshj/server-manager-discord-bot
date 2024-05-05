@@ -18,7 +18,7 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to get server status. Exit code: {process.ExitCode}; Output: {output}");
+            throw new Exception($"Failed to get server status. Exit code: {process.ExitCode}");
         }
 
         var status = output.Split(' ')[0];
@@ -39,8 +39,7 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-            throw new Exception($"Failed to start server. Exit code: {process.ExitCode}; Output: {output}");
+            throw new Exception($"Failed to start server. Exit code: {process.ExitCode}");
         }
     }
 
@@ -52,8 +51,7 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-            throw new Exception($"Failed to stop server. Exit code: {process.ExitCode}; Output: {output}");
+            throw new Exception($"Failed to stop server. Exit code: {process.ExitCode}");
         }
     }
 
@@ -67,7 +65,7 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to get server logs. Exit code: {process.ExitCode}; Output: {output}");
+            throw new Exception($"Failed to get server logs. Exit code: {process.ExitCode}");
         }
 
         return new Dictionary<string, Stream>
