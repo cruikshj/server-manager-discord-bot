@@ -7,23 +7,42 @@ using SmartFormat;
 public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
     ServerManager serverManager,
-    ILargeFileDownloadHandler largeFileDownloadHandler) 
+    ILargeFileDownloadHandler largeFileDownloadHandler,
+    ILogger<ServersCommandModule> logger) 
     : InteractionModuleBase
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
     public ServerManager ServerManager { get; } = serverManager;
     public ILargeFileDownloadHandler LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
+    public ILogger Logger { get; } = logger;
 
     [SlashCommand("servers", "Display server information.")]
     public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))]string? name = null)
     {
-        if (string.IsNullOrEmpty(name))
+        await DeferAsync(ephemeral: true);
+
+        try
         {
-            await List();
+            if (string.IsNullOrEmpty(name))
+            {
+                await List();
+            }
+            else
+            {
+                await Info(name);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await Info(name);
+            if (string.IsNullOrEmpty(name))
+            {
+                Logger.LogError(ex, "Error processing servers command.");
+            }
+            else
+            {
+                Logger.LogError(ex, "Error processing servers command for server '{Name}'.", name);
+            }
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
 
@@ -39,13 +58,11 @@ public class ServersCommandModule(
         }
         embed.Description = description.ToString();
 
-        await RespondAsync(embed: embed.Build(), ephemeral: true);
+        await FollowupAsync(embed: embed.Build(), ephemeral: true);
     }
 
     private async Task Info(string name)
     {
-        await DeferAsync(ephemeral: true);
-
         var info = await ServerManager.GetServerInfoAsync(name);
         var status = await ServerManager.GetServerStatusAsync(name);
 
@@ -125,6 +142,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error starting server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -141,6 +159,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error stopping server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -159,6 +178,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error restarting server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -201,6 +221,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error in files interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -239,6 +260,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error in file interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -275,6 +297,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -299,6 +322,7 @@ public class ServersCommandModule(
         }
         catch (Exception ex)
         {
+            Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }

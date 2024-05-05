@@ -6,7 +6,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddYamlFile("appsettings.yaml", optional: true);
 builder.Configuration.AddYamlFile("appsettings.yml", optional: true);
 builder.Configuration.AddDirectory("Config");
-
 builder.Configuration.AddEnvironmentVariables("SERVERMANAGER_");
 
 builder.Services.AddOptions<AppSettings>().Bind(builder.Configuration);
