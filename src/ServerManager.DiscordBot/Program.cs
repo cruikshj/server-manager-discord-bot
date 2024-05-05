@@ -12,7 +12,6 @@ builder.Configuration.AddDirectory("Config");
 builder.Configuration.AddEnvironmentVariables("SERVERMANAGER_");
 
 builder.Services.AddOptions<AppSettings>().Bind(builder.Configuration);
-builder.Services.ConfigureOptions<AppSettingsSetup>();
 
 builder.Services.AddMemoryCache();
 

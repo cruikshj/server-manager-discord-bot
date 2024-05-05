@@ -1,20 +1,24 @@
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 public class BuiltInLargeFileDownloadHandler(
     IOptions<AppSettings> appSettings,
-    IMemoryCache memoryCache)
+    IMemoryCache memoryCache,
+    IServer server)
     : ILargeFileDownloadHandler
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
     public IMemoryCache MemoryCache { get; } = memoryCache;
+    public IServer Server { get; } = server;
 
     public Task<Uri> GetDownloadUrlAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
     {
         var downloadKey = Guid.NewGuid();
         MemoryCache.Set(downloadKey, fileInfo, AppSettings.DownloadLinkExpiration);
-        var downloadUrl = new Uri(AppSettings.HostUri, $"/download/{downloadKey}");
+        var hostUri = AppSettings.HostUri ?? new Uri(Server.GetDefaultServerAddress());
+        var downloadUrl = new Uri(hostUri, $"/download/{downloadKey}");
         return Task.FromResult(downloadUrl);
     }
 

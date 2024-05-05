@@ -4,7 +4,7 @@ public class AppSettings
 
     public required List<ulong> GuildIds { get; set; } = [];
     
-    public required Uri HostUri { get; set; }
+    public Uri? HostUri { get; set; }
 
     public bool EnableFileDownloads { get; set; } = true;
     
