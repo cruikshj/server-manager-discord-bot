@@ -10,15 +10,15 @@ public class DockerComposeServerHostAdapter(
 
     public override async Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
-        using var process = StartDockerComposeProcess("ps --latest --format \"{{.Status}}\"");
-
-        var output = await process.StandardOutput.ReadToEndAsync();
+        using var process = StartDockerComposeProcess("ps --format \"{{.Status}}\"");
 
         await process.WaitForExitAsync(cancellationToken);
 
+        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to get server status. Exit code: {process.ExitCode}");
+            throw new Exception($"Failed to get server status. Exit code: {process.ExitCode}; Output: {output}");
         }
 
         var status = output.Split(' ')[0];
@@ -39,7 +39,8 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to start server. Exit code: {process.ExitCode}");
+            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+            throw new Exception($"Failed to start server. Exit code: {process.ExitCode}; Output: {output}");
         }
     }
 
@@ -51,7 +52,8 @@ public class DockerComposeServerHostAdapter(
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to stop server. Exit code: {process.ExitCode}");
+            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+            throw new Exception($"Failed to stop server. Exit code: {process.ExitCode}; Output: {output}");
         }
     }
 
@@ -59,18 +61,18 @@ public class DockerComposeServerHostAdapter(
     {
         using var process = StartDockerComposeProcess("logs");
 
-        var logs = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-
         await process.WaitForExitAsync(cancellationToken);
+
+        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"Failed to get server logs. Exit code: {process.ExitCode}");
+            throw new Exception($"Failed to get server logs. Exit code: {process.ExitCode}; Output: {output}");
         }
 
         return new Dictionary<string, Stream>
         {
-            { "output", new MemoryStream(Encoding.UTF8.GetBytes(logs)) }
+            { "output", new MemoryStream(Encoding.UTF8.GetBytes(output)) }
         };
     }
 

@@ -64,7 +64,16 @@ public class ServersCommandModule(
     private async Task Info(string name)
     {
         var info = await ServerManager.GetServerInfoAsync(name);
-        var status = await ServerManager.GetServerStatusAsync(name);
+        ServerStatus? status = null;
+        try
+        {
+            status = await ServerManager.GetServerStatusAsync(name);
+        }
+        catch (Exception ex)
+        {
+            status = ServerStatus.Unknown;
+            Logger.LogError(ex, "Error getting status for server '{Name}'.", name);
+        }
 
         var embed = new EmbedBuilder();
 
