@@ -6,5 +6,7 @@ public class DockerComposeServerHostAdapterOptions : IOptions<DockerComposeServe
     [Required]
     public string DockerProcessFilePath { get; set; } = "docker";
 
+    public string? DockerHost { get; set; }
+
     DockerComposeServerHostAdapterOptions IOptions<DockerComposeServerHostAdapterOptions>.Value => this;
 }

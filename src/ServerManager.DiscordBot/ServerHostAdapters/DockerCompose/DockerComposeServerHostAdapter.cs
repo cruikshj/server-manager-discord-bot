@@ -76,12 +76,21 @@ public class DockerComposeServerHostAdapter(
 
     private Process StartDockerComposeProcess(string arguments)
     {
+        var argumentsBuilder = new StringBuilder();
+        if (!string.IsNullOrEmpty(Options.DockerHost))
+        {
+            argumentsBuilder.Append($"-H {Options.DockerHost} ");
+        }
+        argumentsBuilder.Append("compose ");
+        argumentsBuilder.Append($"--file {Context.Properties.DockerComposeFilePath} ");
+        argumentsBuilder.Append(arguments);
+
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = Options.DockerProcessFilePath,
-                Arguments = $"compose --file {Context.Properties.DockerComposeFilePath} {arguments}",
+                Arguments = argumentsBuilder.ToString(),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
