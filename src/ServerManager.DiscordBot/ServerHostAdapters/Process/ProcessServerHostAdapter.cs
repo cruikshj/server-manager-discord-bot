@@ -9,17 +9,9 @@ public class ProcessServerHostAdapter(
 
     public override Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
-        var processName = Path.GetFileName(Context.Properties.FileName);
+        using var process = GetProcess();
 
-        var processes = Process.GetProcessesByName(processName);
-
-        var status = processes.Length > 0
-            ? ServerStatus.Running
-            : ServerStatus.Stopped;
-
-        processes.DisposeAll();
-
-        return Task.FromResult(status);
+        return Task.FromResult(process is not null ? ServerStatus.Running : ServerStatus.Stopped);
     }
 
     public override async Task StartServerAsync(CancellationToken cancellationToken = default)
@@ -53,25 +45,19 @@ public class ProcessServerHostAdapter(
             throw new InvalidOperationException("Server is already stopped.");
         }
 
-        var processName = Path.GetFileName(Context.Properties.FileName);
+        using var process = GetProcess();
 
-        var processes = Process.GetProcessesByName(processName);
-
-        foreach (var process in processes)
+        if (process is not null)
         {
             process.Kill();
-        }
 
-        processes.DisposeAll();
+            await process.WaitForExitAsync(cancellationToken);
+        }
     }
 
     public override async Task<IDictionary<string, Stream>> GetServerLogsAsync(CancellationToken cancellationToken = default)
-    {
-        var processName = Path.GetFileName(Context.Properties.FileName);
-
-        var processes = Process.GetProcessesByName(processName);
-
-        var process = processes.FirstOrDefault();
+    {        
+        using var process = GetProcess();
 
         var logs = new Dictionary<string, Stream>();
 
@@ -100,8 +86,37 @@ public class ProcessServerHostAdapter(
             }
         }
 
-        processes.DisposeAll();
-
         return logs;
+    }
+
+    private Process? GetProcess()
+    {        
+        var fullFileName = Context.Properties.FileName;
+        if (!string.IsNullOrEmpty(Context.Properties.WorkingDirectory))
+        {
+            fullFileName = Path.Combine(Context.Properties.WorkingDirectory, fullFileName);
+        }
+
+        var fileName = Path.GetFileName(fullFileName);
+
+        var allProcesses = Process.GetProcessesByName(fileName);
+        
+        var processes = allProcesses.Where(p => p.MainModule?.FileName == fullFileName);
+
+        if (processes.Count() > 1)
+        {
+            processes.DisposeAll();
+
+            throw new InvalidOperationException("Multiple processes with the same file name are running.");
+        }
+
+        var process = processes.FirstOrDefault();
+
+        if (process is not null)
+        {
+            allProcesses.Except([process]).DisposeAll();
+        }
+
+        return process;
     }
 }

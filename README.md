@@ -39,46 +39,15 @@ This bot application is distributed as a self-contained executable.  The executa
 
 ### Configuration
 
-Configuration of the bot application can be done in a variety of ways. The application uses `Microsoft.Extensions.Configuration` with the [WebApplication.CreateBuilder defaults](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#default-application-configuration-sources), plus `appsettings.yml` support, `SERVERMANAGER_` environment variable prefix support and support for reading all `.json` and `.yaml` files from a `Config` directory. You can learn how to use standard configuration providers [here](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers).  You may even mix and match these forms of configuration to fit your needs. When using file based configuration, you will need to mount the configuration files into your container.  The examples below will use the `appsettings.yaml` form of configuration.
+Configuration of the bot application can be done in a variety of ways. The application uses `Microsoft.Extensions.Configuration` with the [WebApplication.CreateBuilder defaults](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#default-application-configuration-sources), plus `appsettings.yml` support, `SERVERMANAGER_` environment variable prefix support and support for reading all `.json` and `.yaml` files from a `Config` directory. You can learn how to use standard configuration providers [here](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers).  You may even mix and match these forms of configuration to fit your needs. When using file based configuration, you will need to mount the configuration files into your container. 
 
-#### Basic
+#### Examples
 
-```yaml
-BotToken: "<your token from Discord"
-Servers:
-  "minecraft-1":
-    Game: Minecraft (Bedrock)
-    Icon: https://cdn2.steamgriddb.com/icon_thumb/4a5b76e7170df685ed8b75c7dacce268.png
-    Fields:
-      Address: example.com:12345
-      Mode: Survival
-```
+Each example will show how to host the bot application itself as well as integrating with the hosting platform to control dedicated servers. The bot application does not have to be hosted the same way as the dedicated servers. Feel free to host the bot application however you see fit.
 
-#### Kubernetes Hosted
-
-```yaml
-BotToken: "<your token from Discord"
-ServerInfoProviders:
-  - Type: KubernetesConfigMap
-ServerHostAdapters:
-  Kubernetes:
-    Type: Kubernetes
-```
-
-#### Handling Large File Downloads
-<a name="handlinglargefiledownloads"></a>
-
-Files 25MB or less will be sent via Discord interactions. Files greater than this limit cannot be sent via Discord. The `LargeFileDownloadHandler` is intended to provide an alternative download link in these cases. The current options are `Disabled` and `BuiltIn`. 
-
-##### BuiltIn Handler
-
-```yaml
-HostUri: https://smdb.example.com/
-LargeFileDownloadHandler: BuiltIn
-DownloadLinkExpiration: "24:00:00"
-```
-
-The `BuiltInLargeFileDownloadHandler` will create a temporary download link using the `HostUri` and a guid and make it available to download a file for the `DownloadLinkExpiration`. If this feature is used, HTTP traffic to the app will need to be exposed to your end users in some way.  This is the only endpoint exposed by the bot. If this feature is not used, no exposue is necessary.
+- [Process](examples/process.md)
+- [Docker Compose](examples/docker-compose.md)
+- [Kubernetes](examples/kubernetes.md)
 
 #### All Settings
 
@@ -86,7 +55,7 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 |---|---|---|
 | BotToken | (Required) The Discord Bot token. |  |
 | GuildIds | An array of Discord guild (server) IDs. This can be used for testing or security purposes to limit which Discord servers the bot application will communicate with. | |
-| HostUri | The bot application host URI. Only used if `LargeFileDownloadHandler.BuiltIn` is used. | https://localhost:8080 |
+| HostUri | The bot application host URI. Only used if `LargeFileDownloadHandler.BuiltIn` is used. | https://localhost:5000 |
 | EnableFileDownloadHandler | This is a global setting for whether to enable the file downloads feature.  Configured servers must still opt-in by providing a `FilesPath` value. | true |
 | LargeFileDownloadHandler | Enable file downloads larger than 25MB. See [Handling Large File Downloads](#handlinglargefiledownloads). | Disabled |
 | ServersCacheExpiration | The server info cache expiration. | 5 minutes |
@@ -111,6 +80,7 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 | -Key- | (Required) The section key or name is used to lookup the adapter matching the `HostAdapter` value on server info. | |
 | Type | (Required) The type of the adapter.  Can be `Process`, `DockerCompose`, or `Kubernetes`. | |
 | DockerProcessFilePath (DockerCompose) | The file name of the docker executable. | docker |
+| DockerHost (DockerCompose) | Daemon socket to connect to.  | |
 | KubeConfigPath (Kubernetes) | The path to a Kube Config file to use to connect to Kubernetes. If not provided, `InCluster` configuration will be used. | |
 
 ##### Servers
@@ -132,6 +102,21 @@ The `BuiltInLargeFileDownloadHandler` will create a temporary download link usin
 | HostProperties.Kind (Kubernetes) | The workload kind. Can be `Deployment` or `StatefulSet`. | |
 | HostProperties.Namespace (Kubernetes) | The workload namespace. | |
 | HostProperties.Name (Kubernetes) | The workload name. | |
+
+#### Handling Large File Downloads
+<a name="handlinglargefiledownloads"></a>
+
+Files 25MB or less will be sent via Discord interactions. Files greater than this limit cannot be sent via Discord. The `LargeFileDownloadHandler` is intended to provide an alternative download link in these cases. The current options are `Disabled` and `BuiltIn`. 
+
+##### BuiltIn Handler
+
+```yaml
+HostUri: https://smdb.example.com/
+LargeFileDownloadHandler: BuiltIn
+DownloadLinkExpiration: "24:00:00"
+```
+
+The `BuiltInLargeFileDownloadHandler` will create a temporary download link using the `HostUri` and a guid and make it available to download a file for the `DownloadLinkExpiration`. If this feature is used, HTTP traffic to the app will need to be exposed to your end users in some way.  This is the only endpoint exposed by the bot. If this feature is not used, no exposue is necessary.
 
 ## Contribution
 
