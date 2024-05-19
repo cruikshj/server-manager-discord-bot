@@ -2,7 +2,7 @@ public class AppSettings
 {
     public required string BotToken { get; set; }
 
-    public required List<ulong> GuildIds { get; set; } = [];
+    public List<ulong> GuildIds { get; set; } = [];
     
     public Uri? HostUri { get; set; }
 

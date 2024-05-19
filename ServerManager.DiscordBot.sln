@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F777902F-D75
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerManager.DiscordBot", "src\ServerManager.DiscordBot\ServerManager.DiscordBot.csproj", "{624BF89C-5541-4BD5-AB7E-B50758AE3172}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4EF12ECF-89F6-4EC1-9536-B5980616BF71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerManager.DiscordBot.UnitTests", "tests\ServerManager.DiscordBot.UnitTests\ServerManager.DiscordBot.UnitTests.csproj", "{3EDD60CC-A637-434B-844D-4027D1BD798C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,12 +21,17 @@ Global
 		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{624BF89C-5541-4BD5-AB7E-B50758AE3172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EDD60CC-A637-434B-844D-4027D1BD798C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EDD60CC-A637-434B-844D-4027D1BD798C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EDD60CC-A637-434B-844D-4027D1BD798C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EDD60CC-A637-434B-844D-4027D1BD798C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{624BF89C-5541-4BD5-AB7E-B50758AE3172} = {F777902F-D759-4843-8F54-6786E1FC59CA}
+		{3EDD60CC-A637-434B-844D-4027D1BD798C} = {4EF12ECF-89F6-4EC1-9536-B5980616BF71}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FEC634BC-8A0C-46CD-9602-D82CC28A6E3D}
