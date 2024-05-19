@@ -49,7 +49,7 @@ public class ServerManager(
         return server;
     }
 
-    public async Task<ServerStatus?> GetServerStatusAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<ServerStatus> GetServerStatusAsync(string name, CancellationToken cancellationToken = default)
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
 
@@ -58,7 +58,7 @@ public class ServerManager(
             return await adapter.GetServerStatusAsync(cancellationToken);
         }
 
-        return null;
+        return ServerStatus.Unknown;
     }
 
     public async Task StartServerAsync(string name, bool wait = false, CancellationToken cancellationToken = default)

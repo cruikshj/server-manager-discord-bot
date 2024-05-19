@@ -8,7 +8,7 @@ public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
     ServerManager serverManager,
     ILargeFileDownloadHandler largeFileDownloadHandler,
-    ILogger<ServersCommandModule> logger) 
+    ILogger<ServersCommandModule> logger)
     : InteractionModuleBase
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
@@ -17,7 +17,7 @@ public class ServersCommandModule(
     public ILogger Logger { get; } = logger;
 
     [SlashCommand("servers", "Display server information.")]
-    public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))]string? name = null)
+    public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))] string? name = null)
     {
         await DeferAsync(ephemeral: true);
 
@@ -64,17 +64,6 @@ public class ServersCommandModule(
     private async Task Info(string name)
     {
         var info = await ServerManager.GetServerInfoAsync(name);
-        ServerStatus? status = null;
-        try
-        {
-            status = await ServerManager.GetServerStatusAsync(name);
-        }
-        catch (Exception ex)
-        {
-            status = ServerStatus.Unknown;
-            Logger.LogError(ex, "Error getting status for server '{Name}'.", name);
-        }
-
         var embed = new EmbedBuilder();
 
         embed.Author = new EmbedAuthorBuilder();
@@ -95,19 +84,13 @@ public class ServersCommandModule(
             embed.AddField(field.Key, field.Value);
         }
 
-        if (status is not null)
-        {
-            embed.AddField("Status", status);
-        }
-
-        embed.WithCurrentTimestamp();
-
         var component = new ComponentBuilder();
 
         if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
         {
             var hostActionsRow = new ActionRowBuilder();
             hostActionsRow
+                .WithButton("Status", $"status|{name}", ButtonStyle.Secondary)
                 .WithButton("Start", $"start|{name}", ButtonStyle.Success)
                 .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
                 .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
@@ -162,7 +145,7 @@ public class ServersCommandModule(
         await RespondAsync($"The `{name}` server is stopping...", ephemeral: true);
         try
         {
-            await ServerManager.StopServerAsync(name, wait: true); 
+            await ServerManager.StopServerAsync(name, wait: true);
 
             await FollowupAsync($"{Context.User.GlobalName} stopped the `{name}` server.");
         }
@@ -177,7 +160,7 @@ public class ServersCommandModule(
     public async Task Restart(string name)
     {
         await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
-        
+
         try
         {
             await ServerManager.StopServerAsync(name, wait: true);
@@ -216,7 +199,8 @@ public class ServersCommandModule(
 
             var selectMenu = new SelectMenuBuilder();
             selectMenu.CustomId = $"file|{name}";
-            selectMenu.WithOptions(files.Select(f => new SelectMenuOptionBuilder() {
+            selectMenu.WithOptions(files.Select(f => new SelectMenuOptionBuilder()
+            {
                 Label = f.Name,
                 Value = f.Name
             }).ToList());
@@ -243,7 +227,7 @@ public class ServersCommandModule(
             await FollowupAsync("File downloads are disabled.", ephemeral: true);
             return;
         }
-        
+
         await DeferAsync(ephemeral: true);
         try
         {
@@ -310,7 +294,25 @@ public class ServersCommandModule(
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
-    
+
+    [ComponentInteraction("status|*")]
+    public async Task Status(string name)
+    {
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            var status = await ServerManager.GetServerStatusAsync(name);
+
+            await FollowupAsync($"The status of the `{name}` server is `{status}`.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
     [ComponentInteraction("logs|*")]
     public async Task Logs(string name)
     {
@@ -322,7 +324,7 @@ public class ServersCommandModule(
             if (!logs.Any())
             {
                 await FollowupAsync($"No logs for the `{name}` server are available.", ephemeral: true);
-                return;            
+                return;
             }
 
             var fileAttachments = logs.Select(log => new FileAttachment(log.Value, $"{log.Key}.log")).ToArray();
