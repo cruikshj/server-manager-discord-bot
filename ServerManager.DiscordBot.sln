@@ -5,11 +5,11 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F777902F-D759-4843-8F54-6786E1FC59CA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerManager.DiscordBot", "src\ServerManager.DiscordBot\ServerManager.DiscordBot.csproj", "{624BF89C-5541-4BD5-AB7E-B50758AE3172}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerManagerDiscordBot", "src\ServerManagerDiscordBot\ServerManagerDiscordBot.csproj", "{624BF89C-5541-4BD5-AB7E-B50758AE3172}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4EF12ECF-89F6-4EC1-9536-B5980616BF71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerManager.DiscordBot.UnitTests", "tests\ServerManager.DiscordBot.UnitTests\ServerManager.DiscordBot.UnitTests.csproj", "{3EDD60CC-A637-434B-844D-4027D1BD798C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerManagerDiscordBot.UnitTests", "tests\ServerManagerDiscordBot.UnitTests\ServerManagerDiscordBot.UnitTests.csproj", "{3EDD60CC-A637-434B-844D-4027D1BD798C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

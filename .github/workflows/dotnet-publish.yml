@@ -21,15 +21,15 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Publish (linux-x64)
-      run: dotnet publish ${{ github.workspace }}/src/ServerManager.DiscordBot/ServerManager.DiscordBot.csproj -c Release -r linux-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true --self-contained -o ${{ github.workspace }}/publish/linux-x64
+      run: dotnet publish ${{ github.workspace }}/src/ServerManagerDiscordBot/ServerManagerDiscordBot.csproj -c Release -r linux-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true --self-contained -o ${{ github.workspace }}/publish/linux-x64
     - name: Publish (win-x64)
-      run: dotnet publish ${{ github.workspace }}/src/ServerManager.DiscordBot/ServerManager.DiscordBot.csproj -c Release -r win-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true --self-contained -o ${{ github.workspace }}/publish/win-x64
+      run: dotnet publish ${{ github.workspace }}/src/ServerManagerDiscordBot/ServerManagerDiscordBot.csproj -c Release -r win-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true --self-contained -o ${{ github.workspace }}/publish/win-x64
     - name: Upload release asset (linux-x64)
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ${{ github.workspace }}/publish/linux-x64/ServerManager.DiscordBot
-        asset_name: ServerManager.DiscordBot_${{ github.event.release.tag_name }}_linux-x64
+        asset_path: ${{ github.workspace }}/publish/linux-x64/ServerManagerDiscordBot
+        asset_name: ServerManagerDiscordBot_${{ github.event.release.tag_name }}_linux-x64
         asset_content_type: application/octet-stream
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,8 +37,8 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ${{ github.workspace }}/publish/win-x64/ServerManager.DiscordBot.exe
-        asset_name: ServerManager.DiscordBot_${{ github.event.release.tag_name }}_win-x64.exe
+        asset_path: ${{ github.workspace }}/publish/win-x64/ServerManagerDiscordBot.exe
+        asset_name: ServerManagerDiscordBot_${{ github.event.release.tag_name }}_win-x64.exe
         asset_content_type: application/octet-stream
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

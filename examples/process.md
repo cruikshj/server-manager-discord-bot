@@ -9,14 +9,14 @@ This example shows how to run the bot application executable.
 _folder structure (windows)_
 ```
 C:\some\folder
-    ServerManager.DiscordBot.exe
+    ServerManagerDiscordBot.exe
     appsettings.yaml
 ```
 
 _folder structure (linux)_
 ```
 /some/folder
-    ServerManager.DiscordBot
+    ServerManagerDiscordBot
     appsettings.yaml
 ```
 
@@ -51,7 +51,7 @@ This example expands on the above example to show how the bot can managed a dedi
 _folder structure (windows)_
 ```
 C:\some\folder
-    ServerManager.DiscordBot.exe
+    ServerManagerDiscordBot.exe
     appsettings.yaml
 
 C:\other\folder

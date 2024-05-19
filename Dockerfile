@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
 WORKDIR /source
 
-ARG PROJECT_NAME=ServerManager.DiscordBot
+ARG PROJECT_NAME=ServerManagerDiscordBot
 
 COPY src/${PROJECT_NAME}/${PROJECT_NAME}.csproj .
 RUN dotnet restore
@@ -20,4 +20,4 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates cur
     apt-get update && apt-get install -y docker-ce-cli && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT dotnet ServerManager.DiscordBot.dll
+ENTRYPOINT dotnet ServerManagerDiscordBot.dll

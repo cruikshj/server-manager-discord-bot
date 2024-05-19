@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/ServerManager.DiscordBot/bin/Debug/net8.0/ServerManager.DiscordBot.dll",
+            "program": "${workspaceFolder}/src/ServerManagerDiscordBot/bin/Debug/net8.0/ServerManagerDiscordBot.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/ServerManager.DiscordBot",
+            "cwd": "${workspaceFolder}/src/ServerManagerDiscordBot",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false,
