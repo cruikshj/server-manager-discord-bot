@@ -122,6 +122,24 @@ public class ServersCommandModule(
         await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
     }
 
+    [ComponentInteraction("status|*")]
+    public async Task Status(string name)
+    {
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            var status = await ServerManager.GetServerStatusAsync(name);
+
+            await FollowupAsync($"The status of the `{name}` server is `{status}`.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
     [ComponentInteraction("start|*")]
     public async Task Start(string name)
     {
@@ -135,6 +153,25 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("restart|*")]
+    public async Task Restart(string name)
+    {
+        await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
+
+        try
+        {
+            await ServerManager.StopServerAsync(name, wait: true);
+            await ServerManager.StartServerAsync(name, wait: true);
+
+            await FollowupAsync($"{Context.User.GlobalName} restarted the `{name}` server.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error restarting server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -156,21 +193,64 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("restart|*")]
-    public async Task Restart(string name)
+    [ComponentInteraction("logs|*")]
+    public async Task Logs(string name)
     {
-        await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
-
+        await DeferAsync(ephemeral: true);
         try
         {
-            await ServerManager.StopServerAsync(name, wait: true);
-            await ServerManager.StartServerAsync(name, wait: true);
+            var logs = await ServerManager.GetServerLogsAsync(name);
 
-            await FollowupAsync($"{Context.User.GlobalName} restarted the `{name}` server.");
+            if (!logs.Any())
+            {
+                await FollowupAsync($"No logs for the `{name}` server are available.", ephemeral: true);
+                return;
+            }
+
+            var fileAttachments = logs.Select(log => new FileAttachment(log.Value, $"{log.Key}.log")).ToArray();
+
+            await FollowupWithFilesAsync(fileAttachments, text: $"Logs for the `{name}` server:", ephemeral: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error restarting server '{Name}'.", name);
+            Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("readme|*")]
+    public async Task Readme(string name)
+    {
+        await DeferAsync(ephemeral: true);
+        try
+        {
+            var serverInfo = await ServerManager.GetServerInfoAsync(name);
+
+            if (string.IsNullOrWhiteSpace(serverInfo.Readme))
+            {
+                await FollowupAsync("No readme found.", ephemeral: true);
+                return;
+            }
+
+            var readme = Smart.Format(serverInfo.Readme, serverInfo).Trim();
+            var quotedReadme = "> " + readme.Replace("\n", "\n> ");
+            var response = $"Readme for the `{name}` server:";
+
+            if (response.Length + quotedReadme.Length < 2000)
+            {
+                await FollowupAsync($"{response}\n{quotedReadme}", ephemeral: true);
+            }
+            else
+            {
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(readme)))
+                {
+                    await FollowupWithFileAsync(stream, "README.md", text: response, ephemeral: true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -254,86 +334,6 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in file interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
-        }
-    }
-
-    [ComponentInteraction("readme|*")]
-    public async Task Readme(string name)
-    {
-        await DeferAsync(ephemeral: true);
-        try
-        {
-            var serverInfo = await ServerManager.GetServerInfoAsync(name);
-
-            if (string.IsNullOrWhiteSpace(serverInfo.Readme))
-            {
-                await FollowupAsync("No readme found.", ephemeral: true);
-                return;
-            }
-
-            var readme = Smart.Format(serverInfo.Readme, serverInfo).Trim();
-            var quotedReadme = "> " + readme.Replace("\n", "\n> ");
-            var response = $"Readme for the `{name}` server:";
-
-            if (response.Length + quotedReadme.Length < 2000)
-            {
-                await FollowupAsync($"{response}\n{quotedReadme}", ephemeral: true);
-            }
-            else
-            {
-                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(readme)))
-                {
-                    await FollowupWithFileAsync(stream, "README.md", text: response, ephemeral: true);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
-        }
-    }
-
-    [ComponentInteraction("status|*")]
-    public async Task Status(string name)
-    {
-        await DeferAsync(ephemeral: true);
-
-        try
-        {
-            var status = await ServerManager.GetServerStatusAsync(name);
-
-            await FollowupAsync($"The status of the `{name}` server is `{status}`.", ephemeral: true);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
-        }
-    }
-
-    [ComponentInteraction("logs|*")]
-    public async Task Logs(string name)
-    {
-        await DeferAsync(ephemeral: true);
-        try
-        {
-            var logs = await ServerManager.GetServerLogsAsync(name);
-
-            if (!logs.Any())
-            {
-                await FollowupAsync($"No logs for the `{name}` server are available.", ephemeral: true);
-                return;
-            }
-
-            var fileAttachments = logs.Select(log => new FileAttachment(log.Value, $"{log.Key}.log")).ToArray();
-
-            await FollowupWithFilesAsync(fileAttachments, text: $"Logs for the `{name}` server:", ephemeral: true);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
