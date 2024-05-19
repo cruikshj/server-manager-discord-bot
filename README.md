@@ -16,7 +16,7 @@ This repository represents a Discord Bot application for managing dedicated game
 - Provides server files (such as backups, saves and mod files) using interactions
 - Process, DockerCompose, and Kubernetes integrations
     - Show server status
-    - Start/Stop servers using interactions
+    - Start/Stop/Restart servers using interactions
     - Provides server logs using interactions
 
 ## Setup
@@ -61,7 +61,7 @@ Each example will show how to host the bot application itself as well as integra
 | ServersCacheExpiration | The server info cache expiration. | 5 minutes |
 | DownloadLinkExpiration | The lifetime of a large file download link. | 24 hours |
 | ServerStatusWaitTimeout | The timeout for waiting for server status after a start or stop interaction. | 10 minutes |
-| ServerInfoProviders | This is a collection additional of `ServiceInfoProvider` implementations. All providers will be used to to retrieve server info. A configuration based provider is always used, which reads the `Servers` section of configuration. |  |
+| ServerInfoProviders | This is a collection additional of `ServerInfoProvider` implementations. All providers will be used to to retrieve server info. A configuration based provider is always used, which reads the `Servers` section of configuration. |  |
 | ServerHostAdapters | This is a keyed collection of `ServerHostAdapter` implementations. These adapters allow for servers to be controlled and logs retrieved from a specific host. | |
 | Servers | This is keyed collection of servers for the bot to represent and control. Additional servers can be provided with `ServerInfoProviders`. | |
 
