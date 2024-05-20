@@ -113,6 +113,12 @@ public class ServersCommandModule(
                 .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
             includeContentActionsRow = true;
         }
+        if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
+        {
+            contentActionsRow
+                .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
 
         if (includeContentActionsRow)
         {
@@ -334,6 +340,62 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in file interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("gallery|*|*")]
+    public async Task Gallery(string name, int page)
+    {
+        if (!AppSettings.EnableGallery)
+        {
+            await FollowupAsync("Gallery is disabled.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync(ephemeral: true);
+        try
+        {
+            var files = (await ServerManager.GetServerGalleryFilesAsync(name)).ToArray();
+
+            if (files.Length == 0)
+            {
+                await FollowupAsync("No gallery files found.", ephemeral: true);
+                return;
+            }
+
+            const int pageSize = 10; // Discord max image count
+            var hasPages = files.Length > pageSize;
+            var hasMore = files.Length > pageSize * page;
+            files = files.OrderByDescending(f => f.Name).Skip((page - 1) * pageSize).Take(pageSize).ToArray();
+
+            var component = new ComponentBuilder();
+            var actionsRow = new ActionRowBuilder();
+            component.AddRow(actionsRow);
+
+            if (hasMore)
+            {
+                actionsRow.WithButton("Load more", $"gallery|{name}|{page + 1}", ButtonStyle.Primary);
+            }
+
+            if (AppSettings.EnableGalleryUploads)
+            {
+                actionsRow.WithButton("Upload", $"galleryupload|{name}", ButtonStyle.Secondary);
+            }
+
+            var imageAttachments = files.Select(f => new FileAttachment(f.OpenRead(), f.Name)).ToArray();
+
+            var pageText = hasPages ? $" (page {page})" : "";
+
+            await FollowupWithFilesAsync(
+                text: $"Gallery files for the `{name}` server{pageText}:",
+                attachments: imageAttachments, 
+                components: component.Build(), 
+                ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in gallery interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }

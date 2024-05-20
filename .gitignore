@@ -445,6 +445,6 @@ $RECYCLE.BIN/
 ##
 ## Local environment
 ##
-kubeconfig.yaml
 .env
 localconfig.*
+local/

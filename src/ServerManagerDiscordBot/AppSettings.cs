@@ -10,6 +10,10 @@ public class AppSettings
     
     public LargeFileDownloadHandlerType LargeFileDownloadHandler { get; set; } = LargeFileDownloadHandlerType.Disabled;
 
+    public bool EnableGallery { get; set; } = true;
+
+    public bool EnableGalleryUploads { get; set; } = false;
+
     public TimeSpan ServersCacheExpiration { get; set; } = TimeSpan.FromMinutes(5);
 
     public TimeSpan DownloadLinkExpiration { get; set; } = TimeSpan.FromDays(1);

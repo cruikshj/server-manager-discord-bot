@@ -149,6 +149,28 @@ public class ServerManager(
         return new FileInfo(filePath);
     }
 
+    public async Task<IEnumerable<FileInfo>> GetServerGalleryFilesAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var server = await GetServerInfoAsync(name, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(server.GalleryPath))
+        {
+            throw new InvalidOperationException($"The `{name}` server does not support this operation.");
+        }
+
+        var directory = new DirectoryInfo(server.GalleryPath);
+        if (!directory.Exists)
+        {
+            throw new DirectoryNotFoundException($"The `{name}` server gallery directory `{server.GalleryPath}` does not exist.");
+        }
+
+        var extensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
+        var files = directory.EnumerateFiles()
+                    .Where(file => extensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase));
+
+        return files;
+    }
+
     public async Task<IDictionary<string, Stream>> GetServerLogsAsync(string name, CancellationToken cancellationToken = default)
     {
         var server = await GetServerInfoAsync(name, cancellationToken);
