@@ -1,17 +1,20 @@
 using System.Text;
 using Discord;
 using Discord.Interactions;
+using Discord.Interactions.Builders;
 using Microsoft.Extensions.Options;
 using SmartFormat;
 
 public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
+    CommandManager commandManager,
     ServerManager serverManager,
     ILargeFileDownloadHandler largeFileDownloadHandler,
     ILogger<ServersCommandModule> logger)
     : InteractionModuleBase
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
+    public CommandManager CommandManager { get; } = commandManager;
     public ServerManager ServerManager { get; } = serverManager;
     public ILargeFileDownloadHandler LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
     public ILogger Logger { get; } = logger;
@@ -396,6 +399,52 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in gallery interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("galleryupload|*")]
+    public async Task GalleryUpload(string name)
+    {
+        if (!AppSettings.EnableGalleryUploads)
+        {
+            await FollowupAsync("Gallery uploads are disabled.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync(ephemeral: true);
+        try
+        {
+            var command = CommandManager.GetCommand("servers-gallup");
+            await FollowupAsync($"Upload a file to the gallery using the </servers-gallup:{command.Id}> command.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in gallery upload interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [SlashCommand("servers-gallup", "Upload a file to a server gallery.")]
+    public async Task GalleryUpload([Autocomplete(typeof(ServersAutocompleteHandler))] string name, IAttachment file)
+    {
+        if (!AppSettings.EnableGalleryUploads)
+        {
+            await FollowupAsync("Gallery uploads are disabled.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            await ServerManager.UploadServerGalleryFileAsync(name, file.Url, file.Filename);
+
+            await FollowupAsync($"Uploaded file to the `{name}` server gallery.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in gallery upload command for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }

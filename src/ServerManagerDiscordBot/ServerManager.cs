@@ -164,11 +164,34 @@ public class ServerManager(
             throw new DirectoryNotFoundException($"The `{name}` server gallery directory `{server.GalleryPath}` does not exist.");
         }
 
-        var extensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp" };
         var files = directory.EnumerateFiles()
-                    .Where(file => extensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase));
+                    .Where(file => AppSettings.GalleryFileExtensions.Contains(file.Extension.Substring(1), StringComparer.OrdinalIgnoreCase));
 
         return files;
+    }
+
+    public async Task UploadServerGalleryFileAsync(string name, string sourceUrl, string fileName, CancellationToken cancellationToken = default)
+    {
+        var server = await GetServerInfoAsync(name, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(server.GalleryPath))
+        {
+            throw new InvalidOperationException($"The `{name}` server does not support this operation.");
+        }
+
+        if (!AppSettings.GalleryFileExtensions.Contains(Path.GetExtension(fileName).Substring(1), StringComparer.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException($"The gallery does not support the file type `{Path.GetExtension(fileName)}`.");
+        }
+
+        fileName = $"{Path.GetFileNameWithoutExtension(fileName)}_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(fileName)}";
+
+        var filePath = Path.Combine(server.GalleryPath, fileName);
+        
+        using var client = new HttpClient();
+        using var stream = await client.GetStreamAsync(sourceUrl, cancellationToken);
+        using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await stream.CopyToAsync(fileStream, cancellationToken);
     }
 
     public async Task<IDictionary<string, Stream>> GetServerLogsAsync(string name, CancellationToken cancellationToken = default)

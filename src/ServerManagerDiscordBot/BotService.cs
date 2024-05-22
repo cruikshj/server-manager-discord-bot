@@ -1,4 +1,3 @@
-using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -7,6 +6,7 @@ using Microsoft.Extensions.Options;
 public class BotService(
     IOptions<AppSettings> appSettings,
     DiscordSocketClient client,
+    CommandManager commandManager,
     InteractionService interactionService,
     ILogger<BotService> logger,
     IServiceProvider serviceProvider) 
@@ -17,6 +17,8 @@ public class BotService(
     public ILogger Logger { get; } = logger;
     public IServiceProvider ServiceProvider { get; } = serviceProvider;
     public DiscordSocketClient Client { get; } = client;
+    public CommandManager CommandManager { get; } = commandManager;
+    public IReadOnlyCollection<IApplicationCommand> Commands { get; private set; } = [];
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -29,8 +31,6 @@ public class BotService(
         Client.SlashCommandExecuted += CommandHandler;
         Client.SelectMenuExecuted += CommandHandler;
         Client.AutocompleteExecuted += CommandHandler;
-
-        await InteractionService.AddModulesAsync(Assembly.GetEntryAssembly(), ServiceProvider);
 
         await Client.LoginAsync(TokenType.Bot, AppSettings.BotToken);
 
@@ -56,7 +56,7 @@ public class BotService(
 
     private async Task Ready()
     {
-        await RegisterCommandsAsync();
+        await CommandManager.RegisterCommandsAsync();
 
         await Client.SetStatusAsync(UserStatus.Online);
     }
@@ -65,21 +65,6 @@ public class BotService(
     {
         var context = new SocketInteractionContext(Client, interaction);
         await InteractionService.ExecuteCommandAsync(context, ServiceProvider);
-    }
-
-    private async Task RegisterCommandsAsync()
-    {        
-        if (!AppSettings.GuildIds.Any())
-        {
-            await InteractionService.RegisterCommandsGloballyAsync(true);
-        }
-        else
-        {
-            foreach (var guildId in AppSettings.GuildIds)
-            {
-                await InteractionService.RegisterCommandsToGuildAsync(guildId, true);
-            }
-        }
     }
 
     private Task LogAsync(LogMessage message)

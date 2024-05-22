@@ -28,6 +28,7 @@ builder.Services.AddSingleton(sp => {
         LogLevel = Discord.LogSeverity.Verbose
     });
 });
+builder.Services.AddSingleton<CommandManager>();
 builder.Services.AddHostedService<BotService>();
 
 builder.Services.AddSingleton<ServerManager>();
