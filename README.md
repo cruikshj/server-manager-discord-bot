@@ -58,6 +58,9 @@ Each example will show how to host the bot application itself as well as integra
 | HostUri | The bot application host URI. Only used if `LargeFileDownloadHandler.BuiltIn` is used. | https://localhost:5000 |
 | EnableFileDownloadHandler | This is a global setting for whether to enable the file downloads feature.  Configured servers must still opt-in by providing a `FilesPath` value. | true |
 | LargeFileDownloadHandler | Enable file downloads larger than 25MB. See [Handling Large File Downloads](#handlinglargefiledownloads). | Disabled |
+| EnableGallery | Enable server gallery. | true |
+| EnableGalleryUploads | Enable uploads to the gallery. | false |
+| GalleryFileExtensions | Gallery file extensions. | [ png, jpg, jpeg, gif, webp ] |
 | ServersCacheExpiration | The server info cache expiration. | 5 minutes |
 | DownloadLinkExpiration | The lifetime of a large file download link. | 24 hours |
 | ServerStatusWaitTimeout | The timeout for waiting for server status after a start or stop interaction. | 10 minutes |

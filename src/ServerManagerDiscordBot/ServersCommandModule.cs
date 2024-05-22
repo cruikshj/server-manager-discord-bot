@@ -1,17 +1,20 @@
 using System.Text;
 using Discord;
 using Discord.Interactions;
+using Discord.Interactions.Builders;
 using Microsoft.Extensions.Options;
 using SmartFormat;
 
 public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
+    CommandManager commandManager,
     ServerManager serverManager,
     ILargeFileDownloadHandler largeFileDownloadHandler,
     ILogger<ServersCommandModule> logger)
     : InteractionModuleBase
 {
     public AppSettings AppSettings { get; } = appSettings.Value;
+    public CommandManager CommandManager { get; } = commandManager;
     public ServerManager ServerManager { get; } = serverManager;
     public ILargeFileDownloadHandler LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
     public ILogger Logger { get; } = logger;
@@ -113,6 +116,12 @@ public class ServersCommandModule(
                 .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
             includeContentActionsRow = true;
         }
+        if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
+        {
+            contentActionsRow
+                .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
 
         if (includeContentActionsRow)
         {
@@ -120,6 +129,24 @@ public class ServersCommandModule(
         }
 
         await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
+    }
+
+    [ComponentInteraction("status|*")]
+    public async Task Status(string name)
+    {
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            var status = await ServerManager.GetServerStatusAsync(name);
+
+            await FollowupAsync($"The status of the `{name}` server is `{status}`.", ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
     }
 
     [ComponentInteraction("start|*")]
@@ -135,6 +162,25 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("restart|*")]
+    public async Task Restart(string name)
+    {
+        await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
+
+        try
+        {
+            await ServerManager.StopServerAsync(name, wait: true);
+            await ServerManager.StartServerAsync(name, wait: true);
+
+            await FollowupAsync($"{Context.User.GlobalName} restarted the `{name}` server.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error restarting server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -156,21 +202,64 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("restart|*")]
-    public async Task Restart(string name)
+    [ComponentInteraction("logs|*")]
+    public async Task Logs(string name)
     {
-        await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
-
+        await DeferAsync(ephemeral: true);
         try
         {
-            await ServerManager.StopServerAsync(name, wait: true);
-            await ServerManager.StartServerAsync(name, wait: true);
+            var logs = await ServerManager.GetServerLogsAsync(name);
 
-            await FollowupAsync($"{Context.User.GlobalName} restarted the `{name}` server.");
+            if (!logs.Any())
+            {
+                await FollowupAsync($"No logs for the `{name}` server are available.", ephemeral: true);
+                return;
+            }
+
+            var fileAttachments = logs.Select(log => new FileAttachment(log.Value, $"{log.Key}.log")).ToArray();
+
+            await FollowupWithFilesAsync(fileAttachments, text: $"Logs for the `{name}` server:", ephemeral: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error restarting server '{Name}'.", name);
+            Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [ComponentInteraction("readme|*")]
+    public async Task Readme(string name)
+    {
+        await DeferAsync(ephemeral: true);
+        try
+        {
+            var serverInfo = await ServerManager.GetServerInfoAsync(name);
+
+            if (string.IsNullOrWhiteSpace(serverInfo.Readme))
+            {
+                await FollowupAsync("No readme found.", ephemeral: true);
+                return;
+            }
+
+            var readme = Smart.Format(serverInfo.Readme, serverInfo).Trim();
+            var quotedReadme = "> " + readme.Replace("\n", "\n> ");
+            var response = $"Readme for the `{name}` server:";
+
+            if (response.Length + quotedReadme.Length < 2000)
+            {
+                await FollowupAsync($"{response}\n{quotedReadme}", ephemeral: true);
+            }
+            else
+            {
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(readme)))
+                {
+                    await FollowupWithFileAsync(stream, "README.md", text: response, ephemeral: true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
@@ -258,82 +347,104 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("readme|*")]
-    public async Task Readme(string name)
+    [ComponentInteraction("gallery|*|*")]
+    public async Task Gallery(string name, int page)
     {
+        if (!AppSettings.EnableGallery)
+        {
+            await FollowupAsync("Gallery is disabled.", ephemeral: true);
+            return;
+        }
+
         await DeferAsync(ephemeral: true);
         try
         {
-            var serverInfo = await ServerManager.GetServerInfoAsync(name);
+            var files = (await ServerManager.GetServerGalleryFilesAsync(name)).ToArray();
 
-            if (string.IsNullOrWhiteSpace(serverInfo.Readme))
+            if (files.Length == 0)
             {
-                await FollowupAsync("No readme found.", ephemeral: true);
+                await FollowupAsync("No gallery files found.", ephemeral: true);
                 return;
             }
 
-            var readme = Smart.Format(serverInfo.Readme, serverInfo).Trim();
-            var quotedReadme = "> " + readme.Replace("\n", "\n> ");
-            var response = $"Readme for the `{name}` server:";
+            const int pageSize = 10; // Discord max image count
+            var hasPages = files.Length > pageSize;
+            var hasMore = files.Length > pageSize * page;
+            files = files.OrderByDescending(f => f.Name).Skip((page - 1) * pageSize).Take(pageSize).ToArray();
 
-            if (response.Length + quotedReadme.Length < 2000)
+            var component = new ComponentBuilder();
+            var actionsRow = new ActionRowBuilder();
+            component.AddRow(actionsRow);
+
+            if (hasMore)
             {
-                await FollowupAsync($"{response}\n{quotedReadme}", ephemeral: true);
+                actionsRow.WithButton("Load more", $"gallery|{name}|{page + 1}", ButtonStyle.Primary);
             }
-            else
+
+            if (AppSettings.EnableGalleryUploads)
             {
-                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(readme)))
-                {
-                    await FollowupWithFileAsync(stream, "README.md", text: response, ephemeral: true);
-                }
+                actionsRow.WithButton("Upload", $"galleryupload|{name}", ButtonStyle.Secondary);
             }
+
+            var imageAttachments = files.Select(f => new FileAttachment(f.OpenRead(), f.Name)).ToArray();
+
+            var pageText = hasPages ? $" (page {page})" : "";
+
+            await FollowupWithFilesAsync(
+                text: $"Gallery files for the `{name}` server{pageText}:",
+                attachments: imageAttachments, 
+                components: component.Build(), 
+                ephemeral: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
+            Logger.LogError(ex, "Error in gallery interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
 
-    [ComponentInteraction("status|*")]
-    public async Task Status(string name)
+    [ComponentInteraction("galleryupload|*")]
+    public async Task GalleryUpload(string name)
     {
-        await DeferAsync(ephemeral: true);
+        if (!AppSettings.EnableGalleryUploads)
+        {
+            await FollowupAsync("Gallery uploads are disabled.", ephemeral: true);
+            return;
+        }
 
+        await DeferAsync(ephemeral: true);
         try
         {
-            var status = await ServerManager.GetServerStatusAsync(name);
-
-            await FollowupAsync($"The status of the `{name}` server is `{status}`.", ephemeral: true);
+            var command = CommandManager.GetCommand("servers-gallup");
+            await FollowupAsync($"Upload a file to the gallery using the </servers-gallup:{command.Id}> command.", ephemeral: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
+            Logger.LogError(ex, "Error in gallery upload interaction for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
 
-    [ComponentInteraction("logs|*")]
-    public async Task Logs(string name)
+    [SlashCommand("servers-gallup", "Upload a file to a server gallery.")]
+    public async Task GalleryUpload([Autocomplete(typeof(ServersAutocompleteHandler))] string name, IAttachment file)
     {
+        if (!AppSettings.EnableGalleryUploads)
+        {
+            await FollowupAsync("Gallery uploads are disabled.", ephemeral: true);
+            return;
+        }
+
         await DeferAsync(ephemeral: true);
+
         try
         {
-            var logs = await ServerManager.GetServerLogsAsync(name);
+            await ServerManager.UploadServerGalleryFileAsync(name, file.Url, file.Filename);
 
-            if (!logs.Any())
-            {
-                await FollowupAsync($"No logs for the `{name}` server are available.", ephemeral: true);
-                return;
-            }
-
-            var fileAttachments = logs.Select(log => new FileAttachment(log.Value, $"{log.Key}.log")).ToArray();
-
-            await FollowupWithFilesAsync(fileAttachments, text: $"Logs for the `{name}` server:", ephemeral: true);
+            await FollowupAsync($"Uploaded file to the `{name}` server gallery.");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
+            Logger.LogError(ex, "Error in gallery upload command for server '{Name}'.", name);
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }

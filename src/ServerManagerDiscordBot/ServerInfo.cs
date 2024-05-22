@@ -13,5 +13,7 @@ public class ServerInfo
     
     public string? FilesPath { get; set; }
 
+    public string? GalleryPath { get; set; }
+
     public Dictionary<string, string> Fields { get; set; } = new Dictionary<string, string>();
 }
