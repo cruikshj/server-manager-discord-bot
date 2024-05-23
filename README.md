@@ -4,20 +4,35 @@ This repository represents a Discord Bot application for managing dedicated game
 
 ## Features
 
-- Displays list of configured servers using `/servers` command  
+- Displays list of configured servers
 
   ![list](https://raw.githubusercontent.com/cruikshj/server-manager-discord-bot/main/assets/servers-list.png)
 
-- Displays detailed server information using `/servers <name>` command  
+- Displays detailed server information
 
   ![info](https://raw.githubusercontent.com/cruikshj/server-manager-discord-bot/main/assets/servers-info.png)
 
-- Provides server readme through using interactions
-- Provides server files (such as backups, saves and mod files) using interactions
+- Provides server readme
+- Provides server files (such as backups, saves and mod files)
+- Provides a per server gallery for screenshots and other images
 - Process, DockerCompose, and Kubernetes integrations
     - Show server status
-    - Start/Stop/Restart servers using interactions
-    - Provides server logs using interactions
+    - Start/Stop/Restart servers
+    - Provides server logs
+
+## Commands
+
+- `/sm list`
+- `/sm info`
+- `/sm status`
+- `/sm start`
+- `/sm restart`
+- `/sm stop`
+- `/sm logs`
+- `/sm files`
+- `/sm readme`
+- `/sm gallery`
+- `/sm gallery-upload`
 
 ## Setup
 
@@ -56,6 +71,7 @@ Each example will show how to host the bot application itself as well as integra
 | BotToken | (Required) The Discord Bot token. |  |
 | GuildIds | An array of Discord guild (server) IDs. This can be used for testing or security purposes to limit which Discord servers the bot application will communicate with. | |
 | HostUri | The bot application host URI. Only used if `LargeFileDownloadHandler.BuiltIn` is used. | https://localhost:5000 |
+| SlashCommandPrefix | The command group or prefix to use for the bot. | sm |
 | EnableFileDownloadHandler | This is a global setting for whether to enable the file downloads feature.  Configured servers must still opt-in by providing a `FilesPath` value. | true |
 | LargeFileDownloadHandler | Enable file downloads larger than 25MB. See [Handling Large File Downloads](#handlinglargefiledownloads). | Disabled |
 | EnableGallery | Enable server gallery. | true |

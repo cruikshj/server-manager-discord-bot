@@ -6,6 +6,8 @@ public class AppSettings
     
     public Uri? HostUri { get; set; }
 
+    public string SlashCommandPrefix { get; set; } = "sm";
+
     public bool EnableFileDownloads { get; set; } = true;
     
     public LargeFileDownloadHandlerType LargeFileDownloadHandler { get; set; } = LargeFileDownloadHandlerType.Disabled;
