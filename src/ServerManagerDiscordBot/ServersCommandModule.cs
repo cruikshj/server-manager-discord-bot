@@ -5,6 +5,7 @@ using Discord.Interactions.Builders;
 using Microsoft.Extensions.Options;
 using SmartFormat;
 
+[Group("sm", "Commands for dedicated server management.")]
 public class ServersCommandModule(
     IOptions<AppSettings> appSettings,
     CommandManager commandManager,
@@ -19,21 +20,109 @@ public class ServersCommandModule(
     public ILargeFileDownloadHandler LargeFileDownloadHandler { get; } = largeFileDownloadHandler;
     public ILogger Logger { get; } = logger;
 
-    [SlashCommand("servers", "Display server information.")]
-    public async Task Servers([Autocomplete(typeof(ServersAutocompleteHandler))] string? name = null)
+    public override void Construct(ModuleBuilder builder, InteractionService commandService)
+    {
+        base.Construct(builder, commandService);
+
+        builder.WithGroupName(AppSettings.SlashCommandPrefix);
+    }
+
+    [SlashCommand("list", "List all servers.")]
+    public async Task List()
     {
         await DeferAsync(ephemeral: true);
 
         try
         {
-            if (string.IsNullOrEmpty(name))
+            var embed = new EmbedBuilder();
+            embed.Title = "Server List";
+            var description = new StringBuilder();
+            var servers = await ServerManager.GetServersAsync();
+            foreach (var server in servers)
             {
-                await List();
+                description.AppendLine(server.Key);
             }
-            else
+            embed.Description = description.ToString();
+
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing list command.");
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    [SlashCommand("info", "Provides information and interactions for a server.")]
+    public async Task Info([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
+    {
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            var info = await ServerManager.GetServerInfoAsync(name);
+            var embed = new EmbedBuilder();
+
+            embed.Author = new EmbedAuthorBuilder();
+            embed.Author.Name = name;
+
+            if (!string.IsNullOrWhiteSpace(info.Game))
             {
-                await Info(name);
+                embed.Title = info.Game;
             }
+
+            if (!string.IsNullOrWhiteSpace(info.Icon))
+            {
+                embed.ThumbnailUrl = info.Icon;
+            }
+
+            foreach (var field in info.Fields)
+            {
+                embed.AddField(field.Key, field.Value);
+            }
+
+            var component = new ComponentBuilder();
+
+            if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
+            {
+                var hostActionsRow = new ActionRowBuilder();
+                hostActionsRow
+                    .WithButton("Status", $"status|{name}", ButtonStyle.Secondary)
+                    .WithButton("Start", $"start|{name}", ButtonStyle.Success)
+                    .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
+                    .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
+                    .WithButton("Logs", $"logs|{name}", ButtonStyle.Secondary);
+                component.AddRow(hostActionsRow);
+            }
+
+            var contentActionsRow = new ActionRowBuilder();
+            var includeContentActionsRow = false;
+
+            if (!string.IsNullOrWhiteSpace(info.Readme))
+            {
+                contentActionsRow
+                    .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
+                includeContentActionsRow = true;
+            }
+            if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
+            {
+                contentActionsRow
+                    .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
+                includeContentActionsRow = true;
+            }
+            if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
+            {
+                contentActionsRow
+                    .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
+                includeContentActionsRow = true;
+            }
+
+            if (includeContentActionsRow)
+            {
+                component.AddRow(contentActionsRow);
+            }
+
+            await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
         }
         catch (Exception ex)
         {
@@ -49,90 +138,9 @@ public class ServersCommandModule(
         }
     }
 
-    private async Task List()
-    {
-        var embed = new EmbedBuilder();
-        embed.Title = "Server List";
-        var description = new StringBuilder();
-        var servers = await ServerManager.GetServersAsync();
-        foreach (var server in servers)
-        {
-            description.AppendLine(server.Key);
-        }
-        embed.Description = description.ToString();
-
-        await FollowupAsync(embed: embed.Build(), ephemeral: true);
-    }
-
-    private async Task Info(string name)
-    {
-        var info = await ServerManager.GetServerInfoAsync(name);
-        var embed = new EmbedBuilder();
-
-        embed.Author = new EmbedAuthorBuilder();
-        embed.Author.Name = name;
-
-        if (!string.IsNullOrWhiteSpace(info.Game))
-        {
-            embed.Title = info.Game;
-        }
-
-        if (!string.IsNullOrWhiteSpace(info.Icon))
-        {
-            embed.ThumbnailUrl = info.Icon;
-        }
-
-        foreach (var field in info.Fields)
-        {
-            embed.AddField(field.Key, field.Value);
-        }
-
-        var component = new ComponentBuilder();
-
-        if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
-        {
-            var hostActionsRow = new ActionRowBuilder();
-            hostActionsRow
-                .WithButton("Status", $"status|{name}", ButtonStyle.Secondary)
-                .WithButton("Start", $"start|{name}", ButtonStyle.Success)
-                .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
-                .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
-                .WithButton("Logs", $"logs|{name}", ButtonStyle.Secondary);
-            component.AddRow(hostActionsRow);
-        }
-
-        var contentActionsRow = new ActionRowBuilder();
-        var includeContentActionsRow = false;
-
-        if (!string.IsNullOrWhiteSpace(info.Readme))
-        {
-            contentActionsRow
-                .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
-            includeContentActionsRow = true;
-        }
-        if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
-        {
-            contentActionsRow
-                .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
-            includeContentActionsRow = true;
-        }
-        if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
-        {
-            contentActionsRow
-                .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
-            includeContentActionsRow = true;
-        }
-
-        if (includeContentActionsRow)
-        {
-            component.AddRow(contentActionsRow);
-        }
-
-        await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
-    }
-
-    [ComponentInteraction("status|*")]
-    public async Task Status(string name)
+    [ComponentInteraction("status|*", true)]
+    [SlashCommand("status", "Provides the status of a server.")]
+    public async Task Status([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await DeferAsync(ephemeral: true);
 
@@ -149,8 +157,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("start|*")]
-    public async Task Start(string name)
+    [ComponentInteraction("start|*", true)]
+    [SlashCommand("start", "Starts a server.")]
+    public async Task Start([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await RespondAsync($"The `{name}` server is starting...", ephemeral: true);
         try
@@ -166,8 +175,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("restart|*")]
-    public async Task Restart(string name)
+    [ComponentInteraction("restart|*", true)]
+    [SlashCommand("restart", "Restarts a server.")]
+    public async Task Restart([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await RespondAsync($"The `{name}` server is restarting...", ephemeral: true);
 
@@ -185,8 +195,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("stop|*")]
-    public async Task Stop(string name)
+    [ComponentInteraction("stop|*", true)]
+    [SlashCommand("stop", "Stops a server.")]
+    public async Task Stop([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await RespondAsync($"The `{name}` server is stopping...", ephemeral: true);
         try
@@ -202,8 +213,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("logs|*")]
-    public async Task Logs(string name)
+    [ComponentInteraction("logs|*", true)]
+    [SlashCommand("logs", "Provides the logs of a server.")]
+    public async Task Logs([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await DeferAsync(ephemeral: true);
         try
@@ -227,8 +239,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("readme|*")]
-    public async Task Readme(string name)
+    [ComponentInteraction("readme|*", true)]
+    [SlashCommand("readme", "Provides the readme of a server.")]
+    public async Task Readme([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         await DeferAsync(ephemeral: true);
         try
@@ -264,8 +277,9 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("files|*")]
-    public async Task Files(string name)
+    [ComponentInteraction("files|*", true)]
+    [SlashCommand("files", "Provides the files of a server.")]
+    public async Task Files([Autocomplete(typeof(ServersAutocompleteHandler))] string name)
     {
         if (!AppSettings.EnableFileDownloads)
         {
@@ -308,7 +322,7 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("file|*")]
+    [ComponentInteraction("file|*", true)]
     public async Task DownloadFile(string name, string fileName)
     {
         if (!AppSettings.EnableFileDownloads)
@@ -347,16 +361,24 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("gallery|*|*")]
-    public async Task Gallery(string name, int page)
+    [ComponentInteraction("gallery|*|*", true)]
+    [SlashCommand("gallery", "Provides the gallery of a server.")]
+    public async Task Gallery([Autocomplete(typeof(ServersAutocompleteHandler))] string name, int page = 1)
     {
+        await DeferAsync(ephemeral: true);
+
+        if (page < 1)
+        {
+            await FollowupAsync("Page number must be greater than 0.", ephemeral: true);
+            return;
+        }
+
         if (!AppSettings.EnableGallery)
         {
             await FollowupAsync("Gallery is disabled.", ephemeral: true);
             return;
         }
 
-        await DeferAsync(ephemeral: true);
         try
         {
             var files = (await ServerManager.GetServerGalleryFilesAsync(name)).ToArray();
@@ -392,8 +414,8 @@ public class ServersCommandModule(
 
             await FollowupWithFilesAsync(
                 text: $"Gallery files for the `{name}` server{pageText}:",
-                attachments: imageAttachments, 
-                components: component.Build(), 
+                attachments: imageAttachments,
+                components: component.Build(),
                 ephemeral: true);
         }
         catch (Exception ex)
@@ -403,7 +425,7 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("galleryupload|*")]
+    [ComponentInteraction("galleryupload|*", true)]
     public async Task GalleryUpload(string name)
     {
         if (!AppSettings.EnableGalleryUploads)
@@ -425,7 +447,7 @@ public class ServersCommandModule(
         }
     }
 
-    [SlashCommand("servers-gallup", "Upload a file to a server gallery.")]
+    [SlashCommand("gallery-upload", "Upload a file to a server gallery.")]
     public async Task GalleryUpload([Autocomplete(typeof(ServersAutocompleteHandler))] string name, IAttachment file)
     {
         if (!AppSettings.EnableGalleryUploads)
