@@ -61,68 +61,18 @@ public class ServersCommandModule(
         try
         {
             var info = await ServerManager.GetServerInfoAsync(name);
-            var embed = new EmbedBuilder();
 
-            embed.Author = new EmbedAuthorBuilder();
-            embed.Author.Name = name;
-
-            if (!string.IsNullOrWhiteSpace(info.Game))
-            {
-                embed.Title = info.Game;
-            }
-
-            if (!string.IsNullOrWhiteSpace(info.Icon))
-            {
-                embed.ThumbnailUrl = info.Icon;
-            }
-
-            foreach (var field in info.Fields)
-            {
-                embed.AddField(field.Key, field.Value);
-            }
-
-            var component = new ComponentBuilder();
-
+            ServerStatus? status = null;
             if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
             {
-                var hostActionsRow = new ActionRowBuilder();
-                hostActionsRow
-                    .WithButton("Status", $"status|{name}", ButtonStyle.Secondary)
-                    .WithButton("Start", $"start|{name}", ButtonStyle.Success)
-                    .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
-                    .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
-                    .WithButton("Logs", $"logs|{name}", ButtonStyle.Secondary);
-                component.AddRow(hostActionsRow);
+                status = await ServerManager.GetServerStatusAsync(name);
             }
 
-            var contentActionsRow = new ActionRowBuilder();
-            var includeContentActionsRow = false;
+            var embed = BuildInfoEmbed(name, info, status);
 
-            if (!string.IsNullOrWhiteSpace(info.Readme))
-            {
-                contentActionsRow
-                    .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
-                includeContentActionsRow = true;
-            }
-            if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
-            {
-                contentActionsRow
-                    .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
-                includeContentActionsRow = true;
-            }
-            if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
-            {
-                contentActionsRow
-                    .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
-                includeContentActionsRow = true;
-            }
+            var component = BuildInfoComponent(name, info, status);
 
-            if (includeContentActionsRow)
-            {
-                component.AddRow(contentActionsRow);
-            }
-
-            await FollowupAsync(embed: embed.Build(), components: component.Build(), ephemeral: true);
+            await FollowupAsync(embed: embed, components: component, ephemeral: true);
         }
         catch (Exception ex)
         {
@@ -136,6 +86,112 @@ public class ServersCommandModule(
             }
             await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
         }
+    }
+
+    [ComponentInteraction("refresh|*", true)]
+    public async Task RefreshInfo(string name)
+    {
+        await DeferAsync(ephemeral: true);
+
+        try
+        {
+            var info = await ServerManager.GetServerInfoAsync(name);
+            
+            ServerStatus? status = null;
+            if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
+            {
+                status = await ServerManager.GetServerStatusAsync(name);
+            }
+
+            await ModifyOriginalResponseAsync(message =>
+            {
+                message.Embed = BuildInfoEmbed(name, info, status);
+                message.Components = BuildInfoComponent(name, info, status);
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
+            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    private Embed BuildInfoEmbed(string name, ServerInfo info, ServerStatus? status)
+    {
+        var embed = new EmbedBuilder();
+
+        embed.Author = new EmbedAuthorBuilder();
+        embed.Author.Name = name;
+
+        if (!string.IsNullOrWhiteSpace(info.Game))
+        {
+            embed.Title = info.Game;
+        }
+
+        if (!string.IsNullOrWhiteSpace(info.Icon))
+        {
+            embed.ThumbnailUrl = info.Icon;
+        }
+
+        foreach (var field in info.Fields)
+        {
+            embed.AddField(field.Key, field.Value);
+        }
+
+        if (status.HasValue)
+        {
+            embed.AddField("Status", status.Value.ToString());
+        }
+
+        embed.WithCurrentTimestamp();
+
+        return embed.Build();
+    }
+
+    private MessageComponent BuildInfoComponent(string name, ServerInfo info, ServerStatus? status)
+    {
+        var component = new ComponentBuilder();
+
+        if (!string.IsNullOrWhiteSpace(info.HostAdapterName))
+        {
+            var hostActionsRow = new ActionRowBuilder();
+            hostActionsRow
+                .WithButton("Refresh", $"refresh|{name}", ButtonStyle.Secondary)
+                .WithButton("Start", $"start|{name}", ButtonStyle.Success)
+                .WithButton("Restart", $"restart|{name}", ButtonStyle.Primary)
+                .WithButton("Stop", $"stop|{name}", ButtonStyle.Danger)
+                .WithButton("Logs", $"logs|{name}", ButtonStyle.Secondary);
+            component.AddRow(hostActionsRow);
+        }
+
+        var contentActionsRow = new ActionRowBuilder();
+        var includeContentActionsRow = false;
+
+        if (!string.IsNullOrWhiteSpace(info.Readme))
+        {
+            contentActionsRow
+                .WithButton("Readme", $"readme|{name}", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
+        if (AppSettings.EnableFileDownloads && !string.IsNullOrWhiteSpace(info.FilesPath))
+        {
+            contentActionsRow
+                .WithButton("Files", $"files|{name}", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
+        if (AppSettings.EnableGallery && !string.IsNullOrWhiteSpace(info.GalleryPath))
+        {
+            contentActionsRow
+                .WithButton("Gallery", $"gallery|{name}|1", ButtonStyle.Secondary);
+            includeContentActionsRow = true;
+        }
+
+        if (includeContentActionsRow)
+        {
+            component.AddRow(contentActionsRow);
+        }
+
+        return component.Build();
     }
 
     [ComponentInteraction("status|*", true)]
@@ -405,7 +461,7 @@ public class ServersCommandModule(
 
             if (AppSettings.EnableGalleryUploads)
             {
-                actionsRow.WithButton("Upload", $"galleryupload|{name}", ButtonStyle.Secondary);
+                actionsRow.WithButton("Upload", $"gallery-upload|{name}", ButtonStyle.Secondary);
             }
 
             var imageAttachments = files.Select(f => new FileAttachment(f.OpenRead(), f.Name)).ToArray();
@@ -425,7 +481,7 @@ public class ServersCommandModule(
         }
     }
 
-    [ComponentInteraction("galleryupload|*", true)]
+    [ComponentInteraction("gallery-upload|*", true)]
     public async Task GalleryUpload(string name)
     {
         if (!AppSettings.EnableGalleryUploads)
