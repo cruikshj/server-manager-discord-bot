@@ -123,7 +123,7 @@ public class ServerManager(
         var directory = new DirectoryInfo(server.FilesPath);
         if (!directory.Exists)
         {
-            throw new DirectoryNotFoundException($"The `{name}` server files directory `{server.FilesPath}` does not exist.");
+            directory.Create();
         }
 
         var files = directory.EnumerateFiles();
@@ -161,7 +161,7 @@ public class ServerManager(
         var directory = new DirectoryInfo(server.GalleryPath);
         if (!directory.Exists)
         {
-            throw new DirectoryNotFoundException($"The `{name}` server gallery directory `{server.GalleryPath}` does not exist.");
+            directory.Create();
         }
 
         var files = directory.EnumerateFiles()
@@ -177,6 +177,12 @@ public class ServerManager(
         if (string.IsNullOrWhiteSpace(server.GalleryPath))
         {
             throw new InvalidOperationException($"The `{name}` server does not support this operation.");
+        }
+
+        var directory = new DirectoryInfo(server.GalleryPath);
+        if (!directory.Exists)
+        {
+            directory.Create();
         }
 
         if (!AppSettings.GalleryFileExtensions.Contains(Path.GetExtension(fileName).Substring(1), StringComparer.OrdinalIgnoreCase))
