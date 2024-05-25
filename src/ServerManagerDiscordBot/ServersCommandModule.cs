@@ -419,13 +419,13 @@ public class ServersCommandModule(
 
     [ComponentInteraction("gallery|*|*", true)]
     [SlashCommand("gallery", "Provides the gallery of a server.")]
-    public async Task Gallery([Autocomplete(typeof(ServersAutocompleteHandler))] string name, int page = 1)
+    public async Task Gallery([Autocomplete(typeof(ServersAutocompleteHandler))] string name, int startIndex = 1)
     {
         await DeferAsync(ephemeral: true);
 
-        if (page < 1)
+        if (startIndex < 1)
         {
-            await FollowupAsync("Page number must be greater than 0.", ephemeral: true);
+            await FollowupAsync("Start index must be greater than 0.", ephemeral: true);
             return;
         }
 
@@ -445,18 +445,25 @@ public class ServersCommandModule(
                 return;
             }
 
-            const int pageSize = 10; // Discord max image count
-            var hasPages = files.Length > pageSize;
-            var hasMore = files.Length > pageSize * page;
-            files = files.OrderByDescending(f => f.Name).Skip((page - 1) * pageSize).Take(pageSize).ToArray();
+            var totalCount = files.Length;
+            const int maxCount = 10; // Discord max
+            const int maxSize =  25 * 1024 * 1024; // Discord max
+            
+            long fileSetSize = 0; 
+            var fileSet = files
+                .OrderByDescending(f => f.Name)
+                .Skip(startIndex - 1)
+                .Take(maxCount)
+                .TakeWhile(f => (fileSetSize += f.Length) < maxSize)
+                .ToArray();
 
             var component = new ComponentBuilder();
             var actionsRow = new ActionRowBuilder();
             component.AddRow(actionsRow);
 
-            if (hasMore)
+            if (startIndex + fileSet.Length <= totalCount)
             {
-                actionsRow.WithButton("Load more", $"gallery|{name}|{page + 1}", ButtonStyle.Primary);
+                actionsRow.WithButton("Load more", $"gallery|{name}|{startIndex + fileSet.Length}", ButtonStyle.Primary);
             }
 
             if (AppSettings.EnableGalleryUploads)
@@ -464,12 +471,10 @@ public class ServersCommandModule(
                 actionsRow.WithButton("Upload", $"gallery-upload|{name}", ButtonStyle.Secondary);
             }
 
-            var imageAttachments = files.Select(f => new FileAttachment(f.OpenRead(), f.Name)).ToArray();
-
-            var pageText = hasPages ? $" (page {page})" : "";
+            var imageAttachments = fileSet.Select(f => new FileAttachment(f.OpenRead(), f.Name)).ToArray();
 
             await FollowupWithFilesAsync(
-                text: $"Gallery files for the `{name}` server{pageText}:",
+                text: $"Gallery files for the `{name}` server ({startIndex}-{startIndex + fileSet.Length - 1}/{totalCount}):",
                 attachments: imageAttachments,
                 components: component.Build(),
                 ephemeral: true);
