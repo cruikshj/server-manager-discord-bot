@@ -29,11 +29,12 @@ public class CommandManager(
         await InteractionService.AddModulesAsync(Assembly.GetEntryAssembly(), ServiceProvider);
         
         if (!AppSettings.GuildIds.Any())
-        {
+        {            
             Commands = await InteractionService.RegisterCommandsGloballyAsync(true);
         }
         else
         {
+            await InteractionService.RestClient.DeleteAllGlobalCommandsAsync();
             foreach (var guildId in AppSettings.GuildIds)
             {
                 Commands = await InteractionService.RegisterCommandsToGuildAsync(guildId, true);
