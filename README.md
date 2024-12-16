@@ -54,7 +54,7 @@ This bot application is distributed as a self-contained executable.  The executa
 
 ### Configuration
 
-Configuration of the bot application can be done in a variety of ways. The application uses `Microsoft.Extensions.Configuration` with the [WebApplication.CreateBuilder defaults](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#default-application-configuration-sources), plus `appsettings.yml` support, `SERVERMANAGER_` environment variable prefix support and support for reading all `.json` and `.yaml` files from a `Config` directory. You can learn how to use standard configuration providers [here](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers).  You may even mix and match these forms of configuration to fit your needs. When using file based configuration, you will need to mount the configuration files into your container. 
+Configuration of the bot application can be done in a variety of ways. The application uses `Microsoft.Extensions.Configuration` with the [WebApplication.CreateBuilder defaults](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-9.0#default-application-configuration-sources), plus `appsettings.yml` support, `SERVERMANAGER_` environment variable prefix support and support for reading all `.json` and `.yaml` files from a `Config` directory. You can learn how to use standard configuration providers [here](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers).  You may even mix and match these forms of configuration to fit your needs. When using file based configuration, you will need to mount the configuration files into your container. 
 
 #### Examples
 
