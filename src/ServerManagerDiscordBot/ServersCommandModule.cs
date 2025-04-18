@@ -49,7 +49,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error processing list command.");
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -84,7 +84,7 @@ public class ServersCommandModule(
             {
                 Logger.LogError(ex, "Error processing servers command for server '{Name}'.", name);
             }
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -112,7 +112,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -209,7 +209,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in status interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -227,7 +227,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -247,7 +247,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error restarting server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -265,7 +265,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error stopping server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -291,7 +291,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in logs interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -329,7 +329,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in readme interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -374,7 +374,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in files interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -413,7 +413,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in file interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -482,7 +482,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in gallery interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -504,7 +504,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in gallery upload interaction for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 
@@ -528,7 +528,7 @@ public class ServersCommandModule(
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in gallery upload command for server '{Name}'.", name);
-            await FollowupAsync($"Error: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"Interaction failed. See logs for details.", ephemeral: true);
         }
     }
 }
