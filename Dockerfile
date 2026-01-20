@@ -13,11 +13,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app ./
 
-# Install Docker CLI
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-    apt-get update && apt-get install -y docker-ce-cli && \
+# Install Docker CLI (using static binary to avoid Debian version compatibility issues)
+ARG DOCKER_VERSION=27.5.1
+ARG TARGETARCH
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    ARCH=$(case ${TARGETARCH:-amd64} in amd64) echo x86_64;; arm64) echo aarch64;; *) echo ${TARGETARCH};; esac) && \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${ARCH}/docker-${DOCKER_VERSION}.tgz" | tar xz --strip-components=1 -C /usr/local/bin docker/docker && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT dotnet ServerManagerDiscordBot.dll
