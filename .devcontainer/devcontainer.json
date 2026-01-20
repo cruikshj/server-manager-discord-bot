@@ -8,6 +8,9 @@
 		"ghcr.io/devcontainers/features/dotnet:2": {
 			"version": "10.0"
 		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "24"
+		},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 	"customizations": {
@@ -16,22 +19,19 @@
 				"ms-dotnettools.csdevkit",
 				"ms-azuretools.vscode-docker",
 				"GitHub.vscode-github-actions",
-				"GitHub.copilot"
+				"GitHub.copilot",
+				"saoudrizwan.claude-dev"
 			]
 		}
+	},
+	"postCreateCommand": {
+		"dotnet": "dotnet restore",
+		"claude-code": "npm install -g @anthropic-ai/claude-code"
+	},
+	"mounts": [
+		"source=claude-config-${devcontainerId},target=/root/.claude,type=volume"
+	],
+	"containerEnv": {
+		"NODE_OPTIONS": "--dns-result-order=ipv4first"
 	}
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001],
-	// "portsAttributes": {
-	//		"5001": {
-	//			"protocol": "https"
-	//		}
-	// }
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "dotnet restore",
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
 }
