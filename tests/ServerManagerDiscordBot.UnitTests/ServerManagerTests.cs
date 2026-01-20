@@ -4,22 +4,29 @@ using Moq;
 
 public class ServerManagerTests
 {
-    private readonly IOptions<AppSettings> _appSettings;
-    private readonly IMemoryCache _memoryCache;
-    private readonly IEnumerable<IServerInfoProvider> _serverInfoProviders;
-    private readonly IServiceProvider _serviceProvider;
-
-    public ServerManagerTests()
+    private IOptions<AppSettings> GetAppSettings()
     {
-        _appSettings = Options.Create(new AppSettings() {
+        return Options.Create(new AppSettings() {
             BotToken = "BotToken"
         });
-        _memoryCache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
-        _serverInfoProviders = new List<IServerInfoProvider>();
-        _serviceProvider = Mock.Of<IServiceProvider>();
     }
 
-    [Fact]
+    private IMemoryCache GetMemoryCache()
+    {
+        return new MemoryCache(Options.Create(new MemoryCacheOptions()));
+    }
+
+    private IEnumerable<IServerInfoProvider> GetServerInfoProviders()
+    {
+        return new List<IServerInfoProvider>();
+    }
+
+    private IServiceProvider GetServiceProvider()
+    {
+        return Mock.Of<IServiceProvider>();
+    }
+
+    [Test]
     public async Task GetServersAsync_ReturnsCachedServers()
     {
         // Arrange
@@ -31,62 +38,67 @@ public class ServerManagerTests
         var cancellationToken = CancellationToken.None;
         var memoryCacheMock = new Mock<IMemoryCache>();
         memoryCacheMock.Setup(m => m.TryGetValue(It.IsAny<object>(), out servers)).Returns(true);
-        var serverManager = new ServerManager(_appSettings, memoryCacheMock.Object, _serverInfoProviders, _serviceProvider);
+        var serverManager = new ServerManager(GetAppSettings(), memoryCacheMock.Object, GetServerInfoProviders(), GetServiceProvider());
 
         // Act
         var result = await serverManager.GetServersAsync(cancellationToken);
 
         // Assert
-        Assert.Equal(servers, result);
+        await Assert.That(result).IsSameReferenceAs(servers);
     }
 
-    [Fact]
+    [Test]
     public async Task GetServersAsync_ReturnsFreshServers()
     {
         // Arrange
-        object? servers = new Dictionary<string, ServerInfo>
+        var serverInfo1 = new ServerInfo();
+        var serverInfo2 = new ServerInfo();
+        var providerServers = new Dictionary<string, ServerInfo>
         {
-            { "Server1", new ServerInfo() },
-            { "Server2", new ServerInfo() }
+            { "Server1", serverInfo1 },
+            { "Server2", serverInfo2 }
         };
+        object? cachedServers = null;
         var cancellationToken = CancellationToken.None;
         var memoryCacheMock = new Mock<IMemoryCache>();
-        memoryCacheMock.Setup(m => m.TryGetValue(It.IsAny<object>(), out servers)).Returns(false);
+        memoryCacheMock.Setup(m => m.TryGetValue(It.IsAny<object>(), out cachedServers)).Returns(false);
         memoryCacheMock.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(Mock.Of<ICacheEntry>());
         var serverInfoProviderMock = new Mock<IServerInfoProvider>();
-        serverInfoProviderMock.Setup(p => p.GetServerInfoAsync(cancellationToken)).ReturnsAsync((Dictionary<string, ServerInfo>)servers);
+        serverInfoProviderMock.Setup(p => p.GetServerInfoAsync(cancellationToken)).ReturnsAsync(providerServers);
         var serverInfoProviders = new List<IServerInfoProvider> { serverInfoProviderMock.Object };
-        var serverManager = new ServerManager(_appSettings, memoryCacheMock.Object, serverInfoProviders, _serviceProvider);
+        var serverManager = new ServerManager(GetAppSettings(), memoryCacheMock.Object, serverInfoProviders, GetServiceProvider());
 
         // Act
         var result = await serverManager.GetServersAsync(cancellationToken);
 
         // Assert
-        Assert.Equal(servers, result);
+        await Assert.That(result.Count).IsEqualTo(2);
+        await Assert.That(result["Server1"]).IsSameReferenceAs(serverInfo1);
+        await Assert.That(result["Server2"]).IsSameReferenceAs(serverInfo2);
         memoryCacheMock.Verify(m => m.CreateEntry(It.IsAny<object>()), Times.Once);
     }
 
-    [Fact]
+    [Test]
     public async Task GetServerInfoAsync_ThrowsArgumentException_WhenServerNotFound()
     {
         // Arrange
         var serverName = "Server1";
         var cancellationToken = CancellationToken.None;
-        var serverManager = new ServerManager(_appSettings, _memoryCache, _serverInfoProviders, _serviceProvider);
+        var serverManager = new ServerManager(GetAppSettings(), GetMemoryCache(), GetServerInfoProviders(), GetServiceProvider());
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => serverManager.GetServerInfoAsync(serverName, cancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await serverManager.GetServerInfoAsync(serverName, cancellationToken));
     }
     
-    [Fact]
+    [Test]
     public async Task StartServerAsync_ThrowsArgumentException_WhenServerNotFound()
     {
         // Arrange
         var serverName = "Server1";
         var cancellationToken = CancellationToken.None;
-        var serverManager = new ServerManager(_appSettings, _memoryCache, _serverInfoProviders, _serviceProvider);
+        var serverManager = new ServerManager(GetAppSettings(), GetMemoryCache(), GetServerInfoProviders(), GetServiceProvider());
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => serverManager.StartServerAsync(serverName, cancellationToken: cancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await serverManager.StartServerAsync(serverName, cancellationToken: cancellationToken));
     }
 }
