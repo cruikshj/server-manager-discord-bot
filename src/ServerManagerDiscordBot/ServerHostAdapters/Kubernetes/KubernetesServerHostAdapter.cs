@@ -1,27 +1,23 @@
 using System.Diagnostics;
 using k8s;
 using k8s.Models;
-using Microsoft.Extensions.Options;
 
 public class KubernetesServerHostAdapter(
-    IOptions<KubernetesServerHostAdapterOptions> options)
+    IKubernetesClientFactory kubernetesClientFactory)
     : ServerHostAdapterBase<KubernetesServerHostProperties>
 {
-    public KubernetesClientConfiguration KubeConfig { get; } = 
-        !string.IsNullOrEmpty(options.Value.KubeConfigPath) ? 
-        KubernetesClientConfiguration.BuildConfigFromConfigFile(options.Value.KubeConfigPath) :
-        KubernetesClientConfiguration.InClusterConfig();
+    public IKubernetesClientFactory KubernetesClientFactory { get; } = kubernetesClientFactory;
 
     public override async Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
-        using var client = new Kubernetes(KubeConfig);
+        using var client = KubernetesClientFactory.CreateClient();
 
         return await GetServerStatusAsync(client, cancellationToken);
     }
 
     public override async Task<bool> WaitForServerStatusAsync(ServerStatus status, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
-        using var client = new Kubernetes(KubeConfig);
+        using var client = KubernetesClientFactory.CreateClient();
         
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.Elapsed < timeout && !cancellationToken.IsCancellationRequested)
@@ -37,7 +33,7 @@ public class KubernetesServerHostAdapter(
         return false;
     }
 
-    private async Task<ServerStatus> GetServerStatusAsync(Kubernetes client, CancellationToken cancellationToken)
+    private async Task<ServerStatus> GetServerStatusAsync(IKubernetes client, CancellationToken cancellationToken)
     {
         ServerStatus GetStatus(int? replicas, int? readyReplicas)
         {
@@ -60,10 +56,10 @@ public class KubernetesServerHostAdapter(
         switch (Context.Properties.Kind)
         {
             case "Deployment":
-                var deployment = await client.ReadNamespacedDeploymentStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
+                var deployment = await client.AppsV1.ReadNamespacedDeploymentStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
                 return GetStatus(deployment.Status.Replicas, deployment.Status.ReadyReplicas);
             case "StatefulSet":
-                var statefulSet = await client.ReadNamespacedStatefulSetStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
+                var statefulSet = await client.AppsV1.ReadNamespacedStatefulSetStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
                 return GetStatus(statefulSet.Status.Replicas, statefulSet.Status.ReadyReplicas);
             default:
                 throw new NotSupportedException($"Kind {Context.Properties.Kind} is not supported.");
@@ -82,21 +78,21 @@ public class KubernetesServerHostAdapter(
 
     private async Task SetServerReplicasAsync(int replicas, CancellationToken cancellationToken)
     {        
-        using var client = new Kubernetes(KubeConfig);
+        using var client = KubernetesClientFactory.CreateClient();
 
         var patch = new V1Patch($@"{{ ""spec"": {{ ""replicas"": {replicas} }} }}", V1Patch.PatchType.MergePatch);
 
         switch (Context.Properties.Kind)
         {
             case "Deployment":
-                await client.PatchNamespacedDeploymentScaleAsync(
+                await client.AppsV1.PatchNamespacedDeploymentScaleAsync(
                     patch,
                     Context.Properties.Name, 
                     Context.Properties.Namespace,
                     cancellationToken: cancellationToken);
                 break;
             case "StatefulSet":
-                await client.PatchNamespacedStatefulSetScaleAsync(
+                await client.AppsV1.PatchNamespacedStatefulSetScaleAsync(
                     patch,
                     Context.Properties.Name, 
                     Context.Properties.Namespace,
@@ -109,25 +105,25 @@ public class KubernetesServerHostAdapter(
 
     public override async Task<IDictionary<string, Stream>> GetServerLogsAsync(CancellationToken cancellationToken = default)
     {        
-        using var client = new Kubernetes(KubeConfig);
+        using var client = KubernetesClientFactory.CreateClient();
 
         switch (Context.Properties.Kind)
         {
             case "Deployment":
-                var deployment = await client.ReadNamespacedDeploymentStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
+                var deployment = await client.AppsV1.ReadNamespacedDeploymentStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
                 return await GetPodLogsAsync(client, deployment.Spec.Selector.MatchLabels, Context.Properties.Namespace, cancellationToken);
             case "StatefulSet":
-                var statefulSet = await client.ReadNamespacedStatefulSetStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
+                var statefulSet = await client.AppsV1.ReadNamespacedStatefulSetStatusAsync(Context.Properties.Name, Context.Properties.Namespace, cancellationToken: cancellationToken);
                 return await GetPodLogsAsync(client, statefulSet.Spec.Selector.MatchLabels, Context.Properties.Namespace, cancellationToken);
             default:
                 throw new NotSupportedException($"Kind {Context.Properties.Kind} is not supported.");
         }
     }
 
-    private static async Task<IDictionary<string, Stream>> GetPodLogsAsync(Kubernetes client, IDictionary<string, string> matchLabels, string ns, CancellationToken cancellationToken)
+    private static async Task<IDictionary<string, Stream>> GetPodLogsAsync(IKubernetes client, IDictionary<string, string> matchLabels, string ns, CancellationToken cancellationToken)
     {
         var labelSelector = string.Join(",", matchLabels.Select(x => $"{x.Key}={x.Value}"));
-        var pods = await client.ListNamespacedPodAsync(ns, labelSelector: labelSelector, cancellationToken: cancellationToken);
+        var pods = await client.CoreV1.ListNamespacedPodAsync(ns, labelSelector: labelSelector, cancellationToken: cancellationToken);
         var pod = pods.Items.FirstOrDefault();
 
         if (pod == null)
@@ -140,7 +136,7 @@ public class KubernetesServerHostAdapter(
         var logs = new Dictionary<string, Stream>();
         foreach (var container in containers)
         {
-            var logStream = await client.ReadNamespacedPodLogAsync(pod.Metadata.Name, ns, container: container, cancellationToken: cancellationToken);
+            var logStream = await client.CoreV1.ReadNamespacedPodLogAsync(pod.Metadata.Name, ns, container: container, cancellationToken: cancellationToken);
             logs.Add(container, logStream);
         }
 

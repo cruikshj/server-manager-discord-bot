@@ -3,10 +3,12 @@ using System.Text;
 using Microsoft.Extensions.Options;
 
 public class DockerComposeServerHostAdapter(
-    IOptions<DockerComposeServerHostAdapterOptions> options)
+    IOptions<DockerComposeServerHostAdapterOptions> options,
+    IProcessRunner processRunner)
     : ServerHostAdapterBase<DockerComposeServerHostProperties>
 {
     public DockerComposeServerHostAdapterOptions Options { get; } = options.Value;
+    public IProcessRunner ProcessRunner { get; } = processRunner;
 
     public override async Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
@@ -74,7 +76,7 @@ public class DockerComposeServerHostAdapter(
         };
     }
 
-    private Process StartDockerComposeProcess(string arguments)
+    private IProcessHandle StartDockerComposeProcess(string arguments)
     {
         var argumentsBuilder = new StringBuilder();
         if (!string.IsNullOrEmpty(Options.DockerHost))
@@ -85,21 +87,16 @@ public class DockerComposeServerHostAdapter(
         argumentsBuilder.Append($"--file {Context.Properties.DockerComposeFilePath} ");
         argumentsBuilder.Append(arguments);
 
-        var process = new Process
+        var startInfo = new ProcessStartInfo
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = Options.DockerProcessFilePath,
-                Arguments = argumentsBuilder.ToString(),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
+            FileName = Options.DockerProcessFilePath,
+            Arguments = argumentsBuilder.ToString(),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
         };
 
-        process.Start();
-
-        return process;
+        return ProcessRunner.Start(startInfo);
     }
 }

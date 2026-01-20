@@ -2,10 +2,12 @@ using System.Diagnostics;
 using Microsoft.Extensions.Options;
 
 public class ProcessServerHostAdapter(
-    IOptions<ProcessServerHostAdapterOptions> options)
+    IOptions<ProcessServerHostAdapterOptions> options,
+    IProcessRunner processRunner)
     : ServerHostAdapterBase<ProcessServerHostProperties>
 {
     public ProcessServerHostAdapterOptions Options { get; } = options.Value;
+    public IProcessRunner ProcessRunner { get; } = processRunner;
 
     public override Task<ServerStatus> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
@@ -21,21 +23,18 @@ public class ProcessServerHostAdapter(
             throw new InvalidOperationException("Server is already running.");
         }
 
-        using var process = new Process
+        var startInfo = new ProcessStartInfo
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = Context.Properties.FileName,
-                Arguments = Context.Properties.Arguments,
-                WorkingDirectory = Context.Properties.WorkingDirectory,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-            }
+            FileName = Context.Properties.FileName,
+            Arguments = Context.Properties.Arguments,
+            WorkingDirectory = Context.Properties.WorkingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
         };
 
-        process.Start();
+        using var process = ProcessRunner.Start(startInfo);
     }
 
     public override async Task StopServerAsync(CancellationToken cancellationToken = default)
@@ -89,7 +88,7 @@ public class ProcessServerHostAdapter(
         return logs;
     }
 
-    private Process? GetProcess()
+    private IProcessHandle? GetProcess()
     {        
         var fullFileName = Context.Properties.FileName;
         if (!string.IsNullOrEmpty(Context.Properties.WorkingDirectory))
@@ -99,13 +98,16 @@ public class ProcessServerHostAdapter(
 
         var fileName = Path.GetFileName(fullFileName);
 
-        var allProcesses = Process.GetProcessesByName(fileName);
+        var allProcesses = ProcessRunner.GetProcessesByName(fileName);
         
-        var processes = allProcesses.Where(p => p.MainModule?.FileName == fullFileName);
+        var processes = allProcesses.Where(p => p.MainModuleFileName == fullFileName).ToArray();
 
-        if (processes.Count() > 1)
+        if (processes.Length > 1)
         {
-            processes.DisposeAll();
+            foreach (var p in allProcesses)
+            {
+                p.Dispose();
+            }
 
             throw new InvalidOperationException("Multiple processes with the same file name are running.");
         }
@@ -114,7 +116,17 @@ public class ProcessServerHostAdapter(
 
         if (process is not null)
         {
-            allProcesses.Except([process]).DisposeAll();
+            foreach (var p in allProcesses.Except([process]))
+            {
+                p.Dispose();
+            }
+        }
+        else
+        {
+            foreach (var p in allProcesses)
+            {
+                p.Dispose();
+            }
         }
 
         return process;
